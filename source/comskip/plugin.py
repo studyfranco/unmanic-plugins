@@ -26,6 +26,7 @@ import logging
 import mimetypes
 import os
 import stat
+import re
 from configparser import NoSectionError, NoOptionError
 
 from unmanic.libs.unplugins.settings import PluginSettings
@@ -130,6 +131,7 @@ def test_valid_mimetype(file_path):
     """
     # Only run this check against video/audio/image MIME types
     mimetypes.init()
+    mimetypes.add_type('video/MP2T', '.ts')
     file_type = mimetypes.guess_type(file_path)[0]
 
     # If the file has no MIME type then it cannot be tested
@@ -205,24 +207,20 @@ def build_comskip_args(abspath, settings):
     config_file = comskip_config_file(settings)
     file_dirname = os.path.dirname(abspath)
     file_sans_ext = os.path.splitext(os.path.basename(abspath))[0]
+    file_ext = os.path.splitext(abspath)[1]
     use_hw = settings.get_setting('use_hw')
-    if not use_hw:
-        return [
-            'comskip',
-            '--ini={}'.format(config_file),
-            '--output={}'.format(file_dirname),
-            '--output-filename={}'.format(file_sans_ext),
-            abspath
-        ]
-    else:
-        return [
-            'comskip',
-            '--cuvid',
-            '--ini={}'.format(config_file),
-            '--output={}'.format(file_dirname),
-            '--output-filename={}'.format(file_sans_ext),
-            abspath
-        ]
+    comskip_args = ['comskip','--ini={}'.format(config_file),'--output={}'.format(file_dirname),'--output-filename={}'.format(file_sans_ext),abspath]
+    if (not use_hw) & (file_ext == '.ts'):
+        comskip_args.insert(1, '-t')
+
+    if use_hw & (file_ext != '.ts'):
+        comskip_args.insert(1, '--cuvid')
+
+    if use_hw & (file_ext == '.ts'):
+        comskip_args.insert(1, '-t')
+        comskip_args.insert(2, '--cuvid')
+
+    return comskip_args
 
 
 def build_comchap_args(abspath, file_out, settings):
@@ -324,6 +322,16 @@ def on_library_management_file_test(data):
 
     return data
 
+def parse_progress(line_text):
+    match = re.search(r'^.*, (\d+)%.*$', line_text)
+    if match:
+        progress = match.group(1)
+    else:
+        progress = ''
+
+    return {
+        'percent': progress
+    }
 
 def on_worker_process(data):
     """
@@ -382,6 +390,9 @@ def on_worker_process(data):
 
         # Generate command
         data['exec_command'] = args
+
+        # Set the parser
+        data['command_progress_parser'] = parse_progress
 
         # Mark file as being processed for post-processor
         src_file_hash = hashlib.md5(original_file_path.encode('utf8')).hexdigest()
