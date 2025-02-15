@@ -1,4 +1,16 @@
 
+---
+
+#### Links:
+
+- [Support](https://unmanic.app/discord)
+- [Issues/Feature Requests](https://github.com/Unmanic/plugin.comskip/issues)
+- [Pull Requests](https://github.com/Unmanic/plugin.comskip/pulls)
+
+---
+
+#### Documentation:
+
 For configuration options:
  - [Comskip forum](http://www.kaashoek.com/comskip/)
  - [GitHub](https://github.com/erikkaashoek/Comskip)
@@ -10,7 +22,7 @@ For configuration options:
 <br>It is recommended to have this as the very last Plugin in your <b>Worker - Processing file</b></b> flow.
 </div>
 
-### Overview
+#### Overview
 
 If **Generate chapter information in file metadata** and **Remove detected commercials from file** are unselected in this Plugin's settings,
 this Plugin will generate a comskip file according to your configuration in the same directory as the source file.
@@ -62,6 +74,5 @@ Chapters are still added to the resulting file.
 </div>
 
 #### <span style="color:blue">Use hardware acceleration for commercial detection</span>
-Uses hardware acceleration for commercial detection - compatible only with Nvidia NVDEC currently.
-
+Uses hardware acceleration for commercial detection - compatible only with Nvidia cuvid currently.
 Do not select if you do not have a compatible Nvidia GPU.

@@ -154,11 +154,20 @@ logofile="$workdir${infile%.*}.logo.txt"
 txtfile="$workdir${infile%.*}.txt"
 fi
 
+infile_ext="${infile##*.}"
 if [ ! -f "$edlfile" ]; then
   if [ "$usehw" == false ]; then
-    $comskipPath --ini="$comskipini" "$infile"
+    if [ "$infile_ext" != 'ts' ]; then
+      $comskipPath --ini="$comskipini" "$infile"
+    else
+      $comskipPath -t --ini="$comskipini" "$infile"
+    fi
   else
-    $comskipPath --cuvid --ini="$comskipini" "$infile"
+    if [ "$infile_ext" != 'ts' ]; then
+      $comskipPath --cuvid --ini="$comskipini" "$infile"
+    else
+      $comskipPath -t --cuvid --ini="$comskipini" "$infile"
+    fi
   fi
 
   if [ ! -f "$edlfile" ] ; then
