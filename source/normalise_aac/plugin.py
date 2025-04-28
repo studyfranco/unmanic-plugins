@@ -93,10 +93,13 @@ class PluginStreamMapper(StreamMapper):
         channels = int(stream_info.get('channels'))
         return {
             'stream_mapping':  ['-map', '0:a:{}'.format(stream_id)],
+            original_sample_rate = stream_info.get('sample_rate', '48000')  # Default to 48kHz if not found
             'stream_encoding': [
                 '-c:a:{}'.format(stream_id), 'aac', '-ac:a:{}'.format(stream_id), '{}'.format(channels),
+                '-ar:a:{}'.format(stream_id), original_sample_rate,  # Use the original sample rate
                 '-filter:a:{}'.format(stream_id), audio_filtergraph(self.settings),
             ]
+
         }
 
 
@@ -104,12 +107,14 @@ def audio_filtergraph(settings):
     i = settings.get_setting('I')
     if not i:
         i = settings.settings.get('I')
+
     lra = settings.get_setting('LRA')
     if not lra:
-        i = settings.settings.get('LRA')
+        lra = settings.settings.get('LRA')
+
     tp = settings.get_setting('TP')
     if not tp:
-        i = settings.settings.get('TP')
+        tp = settings.settings.get('TP')
 
     return 'loudnorm=I={}:LRA={}:TP={}'.format(i, lra, tp)
 
