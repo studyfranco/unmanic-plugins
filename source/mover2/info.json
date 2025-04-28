@@ -5,7 +5,7 @@
         2
     ],
     "description": "Move completed encodes to a different directory.",
-    "icon": "https://raw.githubusercontent.com/Josh5/unmanic.plugin.mover2/master/icon.png",
+    "icon": "https://raw.githubusercontent.com/Unmanic/plugin.mover2/master/icon.png",
     "id": "mover2",
     "name": "Mover v2",
     "platform": [
