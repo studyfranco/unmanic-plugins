@@ -1,120 +1,189 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Copyright:
-#   Copyright (C) 2023 studyfranco <user@example.com> 
-#   (Replace studyfranco <user@example.com> with the actual author if known, otherwise this is a placeholder)
-#
-#   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General
-#   Public License as published by the Free Software Foundation, version 3.
-#
-#   This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-#   implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-#   for more details.
-#
-#   You should have received a copy of the GNU General Public License along with this program.
-#   If not, see <https://www.gnu.org/licenses/>.
+"""
+    plugins.libx.py
 
-from video_transcoder_studyfranco.lib.encoders import base_encoder
+    Written by:               Josh.5 <jsunnex@gmail.com>
+    Date:                     12 Jun 2022, (9:48 AM)
+
+    Copyright:
+        Copyright (C) 2021 Josh Sunnex
+
+        This program is free software: you can redistribute it and/or modify it under the terms of the GNU General
+        Public License as published by the Free Software Foundation, version 3.
+
+        This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+        implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+        for more details.
+
+        You should have received a copy of the GNU General Public License along with this program.
+        If not, see <https://www.gnu.org/licenses/>.
+
+"""
 
 
-class LibsvtAv1Encoder(base_encoder.BaseEncoder):
+class LibsvtAv1Encoder:
 
-    def __init__(self, settings=None):
-        super().__init__(settings)
-        self.encoder_codec = "av1"
-        self.encoder_name = "libsvt-av1"
+    def __init__(self, settings):
+        self.settings = settings
 
     def provides(self):
-        return [self.encoder_name]
-
-    def get_encoder_options_model(self):
         return {
-            "video_encoder_libsvt_av1_preset": {
-                "label": "AV1 Preset (libsvt-av1)",
-                "type": "select",
-                "options": [
-                    {"name": "12 - Fastest", "value": "12"},
-                    {"name": "11", "value": "11"},
-                    {"name": "10", "value": "10"},
-                    {"name": "9", "value": "9"},
-                    {"name": "8 - Default", "value": "8"},
-                    {"name": "7", "value": "7"},
-                    {"name": "6", "value": "6"},
-                    {"name": "5", "value": "5"},
-                    {"name": "4 - Slowest", "value": "4"},
-                ],
-                "default": "8",
-                "order": 180,
-            },
-            "video_encoder_libsvt_av1_crf": {
-                "label": "AV1 CRF (libsvt-av1)",
-                "type": "text",
-                "default": "30",
-                "order": 181,
-            },
-            "video_encoder_libsvt_av1_pix_fmt": {
-                "label": "AV1 Pixel Format (libsvt-av1)",
-                "type": "text",
-                "default": "yuv420p10le",
-                "tooltip": "Specify the pixel format (e.g., yuv420p, yuv420p10le). Leave empty to use source.",
-                "order": 182,
-            },
-            "video_encoder_libsvt_av1_scd": {
-                "label": "AV1 Scene Change Detection (libsvt-av1)",
-                "type": "select",
-                "options": [
-                    {"name": "Enable", "value": "1"},
-                    {"name": "Disable", "value": "0"}
-                ],
-                "default": "1",
-                "tooltip": "Enable or disable scene change detection.",
-                "order": 183,
-            },
-            "video_encoder_libsvt_av1_custom_params": {
-                "label": "AV1 Custom Parameters (libsvt-av1)",
-                "type": "text",
-                "default": "",
-                "tooltip": "Specify any additional custom parameters for libsvt-av1, e.g., '-svtav1-params tune=0'.",
-                "order": 184,
-            },
+            "libsvtav1": {
+                "codec": "av1",
+                "label": "CPU - libsvtav1",
+            }
         }
 
-    def build_video_encoding_parameters(self, outmaps, settings_dict=None):
-        params = super().build_video_encoding_parameters(outmaps, settings_dict)
-        
-        # Correct way to access settings, using the get_setting method from BaseEncoder
-        preset = self.get_setting("video_encoder_libsvt_av1_preset", settings_dict)
-        if preset:
-            params.extend(["-preset", str(preset)])
+    def options(self):
+        return {
+            "preset":                     "4",
+            "encoder_ratecontrol_method": "CRF",
+            "constant_quality_scale":     "23"
+        }
 
-        crf = self.get_setting("video_encoder_libsvt_av1_crf", settings_dict)
-        if crf:
-            params.extend(["-crf", str(crf)])
+    def generate_default_args(self):
+        """
+        Generate a list of args for using a libx decoder
 
-        pix_fmt = self.get_setting("video_encoder_libsvt_av1_pix_fmt", settings_dict)
-        if pix_fmt:
-            params.extend(["-pix_fmt", str(pix_fmt)])
+        :return:
+        """
+        # No default args required
+        generic_kwargs = {}
+        advanced_kwargs = {}
+        return generic_kwargs, advanced_kwargs
 
-        scd = self.get_setting("video_encoder_libsvt_av1_scd", settings_dict)
-        if scd == "0": # Note: settings often come as strings
-            params.extend(["-scd", "0"])
+    def generate_filtergraphs(self):
+        """
+        Generate the required filter for this encoder
+        No filters are required for libx encoders
 
-        custom_params = self.get_setting("video_encoder_libsvt_av1_custom_params", settings_dict)
-        if custom_params:
-            params.extend(custom_params.split())
-            
-        return params
+        :return:
+        """
+        return []
 
-    # The __getattr__ in BaseEncoder should handle the form settings methods automatically.
-    # If specific logic is needed for any of these, they can be explicitly defined.
-    # For example:
-    # def get_video_encoder_libsvt_av1_preset_form_settings(self, settings_dict=None):
-    #     # Custom logic here if needed, otherwise BaseEncoder handles it
-    #     return super().get_video_encoder_libsvt_av1_preset_form_settings(settings_dict)
-    #
-    # No need to redefine these if the BaseEncoder.__getattr__ handles them:
-    # def get_video_encoder_libsvt_av1_crf_form_settings(self, settings_dict=None):
-    # def get_video_encoder_libsvt_av1_pix_fmt_form_settings(self, settings_dict=None):
-    # def get_video_encoder_libsvt_av1_scd_form_settings(self, settings_dict=None):
-    # def get_video_encoder_libsvt_av1_custom_params_form_settings(self, settings_dict=None):
+    def encoder_details(self, encoder):
+        provides = self.provides()
+        return provides.get(encoder, {})
+
+    def args(self, stream_id):
+        stream_encoding = []
+
+        # Use defaults for basic mode
+        if self.settings.get_setting('mode') in ['basic']:
+            defaults = self.options()
+            stream_encoding += [
+                '-preset', str(defaults.get('preset')),
+            ]
+            # TODO: Calculate best crf based on source bitrate
+            default_crf = defaults.get('constant_quality_scale')
+            if self.settings.get_setting('video_encoder') in ['libsvtav1']:
+                default_crf = 23
+            stream_encoding += ['-crf', str(default_crf)]
+            return stream_encoding
+
+        # Add the preset and tune
+        if self.settings.get_setting('preset'):
+            stream_encoding += ['-preset', str(self.settings.get_setting('preset'))]
+
+        if self.settings.get_setting('encoder_ratecontrol_method') in ['CRF']:
+            # Set values for constant quantizer scale
+            stream_encoding += [
+                '-crf', str(self.settings.get_setting('constant_quality_scale')),
+            ]
+
+        return stream_encoding
+
+    def __set_default_option(self, select_options, key, default_option=None):
+        """
+        Sets the default option if the currently set option is not available
+
+        :param select_options:
+        :param key:
+        :return:
+        """
+        available_options = []
+        for option in select_options:
+            available_options.append(option.get('value'))
+            if not default_option:
+                default_option = option.get('value')
+        if self.settings.get_setting(key) not in available_options:
+            self.settings.set_setting(key, default_option)
+
+    def get_preset_form_settings(self):
+        values = {
+            "label":          "Encoder quality preset",
+            "sub_setting":    True,
+            "input_type":     "select",
+            "select_options": [
+                {
+                    "value": "12",
+                    "label": "Very fast - Fastest setting, biggest quality drop",
+                },
+                {
+                    "value": "10",
+                    "label": "Faster - Close to medium/fast quality, faster performance",
+                },
+                {
+                    "value": "8",
+                    "label": "Fast",
+                },
+                {
+                    "value": "6",
+                    "label": "Medium - Balanced performance and quality",
+                },
+                {
+                    "value": "4",
+                    "label": "Slow",
+                },
+                {
+                    "value": "2",
+                    "label": "Slower - Close to 'very slow' quality, faster performance",
+                },
+                {
+                    "value": "1",
+                    "label": "Very Slow - Best quality",
+                },
+            ],
+        }
+        if self.settings.get_setting('mode') not in ['standard']:
+            values["display"] = "hidden"
+        return values
+
+    def get_encoder_ratecontrol_method_form_settings(self):
+        values = {
+            "label":          "Encoder ratecontrol method",
+            "sub_setting":    True,
+            "input_type":     "select",
+            "select_options": [
+                {
+                    "value": "CRF",
+                    "label": "CRF - Constant Rate Factor",
+                },
+            ]
+        }
+        self.__set_default_option(values['select_options'], 'encoder_ratecontrol_method', default_option='CRF')
+        if self.settings.get_setting('mode') not in ['standard']:
+            values["display"] = "hidden"
+        return values
+
+    def get_constant_quality_scale_form_settings(self):
+        # Lower is better
+        values = {
+            "label":          "Constant rate factor",
+            "description":    "",
+            "sub_setting":    True,
+            "input_type":     "slider",
+            "slider_options": {
+                "min": 1,
+                "max": 51,
+            },
+        }
+        if self.settings.get_setting('mode') not in ['standard']:
+            values["display"] = "hidden"
+        if self.settings.get_setting('encoder_ratecontrol_method') not in ['CRF']:
+            values["display"] = "hidden"
+        if self.settings.get_setting('video_encoder') in ['libsvtav1']:
+            values["description"] = "Default value for libsvtav1 = 23"
+        return values
