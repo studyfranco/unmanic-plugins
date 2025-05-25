@@ -27,8 +27,8 @@ class LibsvtAv1Encoder(base_encoder.BaseEncoder):
 
     def provides(self):
         return {
-            self.encoder_name: { # Should resolve to "libsvt-av1"
-                "codec": self.encoder_codec, # Should resolve to "av1"
+            self.encoder_name: { 
+                "codec": self.encoder_codec, 
                 "label": "CPU - libsvt-av1 (AV1)",
             }
         }
@@ -66,8 +66,8 @@ class LibsvtAv1Encoder(base_encoder.BaseEncoder):
             },
             "video_encoder_libsvt_av1_pix_fmt": {
                 "label": "AV1 Pixel Format (libsvt-av1)",
-                "type": "select", # Changed from "text"
-                "default": "auto", # Changed from "yuv420p10le"
+                "type": "select",
+                "default": "auto",
                 "options": [
                     {"name": "Auto (based on source)", "value": "auto"},
                     {"name": "yuv420p (8-bit SDR)", "value": "yuv420p"},
@@ -75,13 +75,13 @@ class LibsvtAv1Encoder(base_encoder.BaseEncoder):
                     {"name": "yuv422p10le (10-bit 4:2:2)", "value": "yuv422p10le"},
                     {"name": "yuv444p10le (10-bit 4:4:4)", "value": "yuv444p10le"}
                 ],
-                "tooltip": "Pixel format. 'Auto' attempts to match source. Select a specific format if needed.", # Updated tooltip
+                "tooltip": "Pixel format. 'Auto' attempts to match source. Select a specific format if needed.",
                 "order": 182,
             },
             "video_encoder_libsvt_av1_gop_size": {
                 "label":   "AV1 GOP Size (libsvt-av1)",
                 "type":    "text",
-                "default": "240", # Changed from ""
+                "default": "240", 
                 "tooltip": "Keyframe interval (GOP size). Empty for auto/default. E.g., 240 for 10-second interval at 24fps.",
                 "order":   185,
             },
@@ -95,7 +95,7 @@ class LibsvtAv1Encoder(base_encoder.BaseEncoder):
             "video_encoder_libsvt_av1_params_string": { 
                 "label": "AV1 Specific Parameters (libsvt-av1)",
                 "type": "text",
-                "default": "scd=1:enable-overlays=1:tune=2:aq-mode=2:tile-rows=1:tile-columns=1:la-depth=40:enable-cdef=1:enable-restoration=1:enable-qm=1:enable-variance-boost=1:fast-decode=1", # Changed from ""
+                "default": "scd=1:enable-overlays=1:tune=2:aq-mode=2:tile-rows=1:tile-columns=1:la-depth=40:enable-cdef=1:enable-restoration=1:enable-qm=1:enable-variance-boost=1:fast-decode=1",
                 "tooltip": "Directly pass parameters to libsvt-av1 using the -svtav1-params flag. Example: scd=1:tune=0:enable-overlays=1",
                 "order": 187, 
             },
@@ -112,31 +112,25 @@ class LibsvtAv1Encoder(base_encoder.BaseEncoder):
         if crf:
             params.extend(["-crf", str(crf)])
 
-        pix_fmt = self.get_setting("video_encoder_libsvt_av1_pix_fmt", settings_dict)
-        if pix_fmt and str(pix_fmt).lower() != "auto" and str(pix_fmt).strip() != "":
-            params.extend(["-pix_fmt", str(pix_fmt)])
+        current_pix_fmt = self.get_setting("video_encoder_libsvt_av1_pix_fmt", settings_dict)
+        if current_pix_fmt and str(current_pix_fmt).strip() and str(current_pix_fmt).lower() != "auto":
+            params.extend(["-pix_fmt", str(current_pix_fmt)])
 
         gop_size = self.get_setting("video_encoder_libsvt_av1_gop_size", settings_dict)
-        if gop_size: # FFmpeg uses encoder default if -g is not specified. Empty string might cause issues.
+        if gop_size and str(gop_size).strip(): 
             params.extend(["-g", str(gop_size)])
 
         force_key_frames = self.get_setting("video_encoder_libsvt_av1_force_key_frames", settings_dict)
-        if force_key_frames:
+        if force_key_frames and str(force_key_frames).strip():
             params.extend(["-force_key_frames", str(force_key_frames)])
             
         params_string = self.get_setting("video_encoder_libsvt_av1_params_string", settings_dict)
-        if params_string:
+        if params_string and str(params_string).strip():
             params.extend(["-svtav1-params", str(params_string)]) 
             
         return params
 
-    # The __getattr__ in BaseEncoder should handle the form settings methods automatically
-    # for options defined in get_encoder_options_model.
-    # If specific form settings are needed for video_encoder_libsvt_av1_crf (slider),
-    # and BaseEncoder doesn't handle it correctly, this method can be uncommented and customized:
-    # def get_video_encoder_libsvt_av1_crf_form_settings(self, settings_dict=None):
-    #     form_settings = super().get_video_encoder_libsvt_av1_crf_form_settings(settings_dict)
-    #     # Ensure slider specific settings are correctly passed if BaseEncoder doesn't do it.
-    #     # form_settings["input_type"] = "slider" # Should be picked from model type
-    #     # form_settings["slider_options"] = self.get_encoder_options_model()["video_encoder_libsvt_av1_crf"]["slider_options"]
-    #     return form_settings
+    # The __getattr__ in BaseEncoder should handle the form settings methods automatically.
+    # No need to redefine individual get_video_encoder_libsvt_av1_..._form_settings methods
+    # unless custom logic beyond the default visibility condition (based on encoder_name)
+    # is required for a specific option.
