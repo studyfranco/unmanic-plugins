@@ -32,11 +32,12 @@ For information on the available encoder settings:
 - **libsvt-av1 (AV1 Encoding)**
   - [SVT-AV1 Encoder User Guide](https://gitlab.com/AOMediaCodec/SVT-AV1/-/blob/master/Docs/svt-av1_encoder_user_guide.md)
   - **Key Options:**
-    - **Preset:** Balances speed and quality (e.g., `8` for default, `12` for fastest, `4` for slowest).
-    - **CRF:** Constant Rate Factor for quality control (e.g., `30`).
+    - **Preset:** Balances speed and quality (0 for slowest/best quality to 12 for fastest). Default is 8.
+    - **CRF:** Constant Rate Factor (slider 0-63). Lower is better quality.
     - **Pixel Format:** Output pixel format (e.g., `yuv420p10le`).
-    - **Scene Change Detection:** Enable/Disable.
-    - **Custom Parameters:** For additional SVT-AV1 specific flags.
+    - **GOP Size:** Keyframe interval (e.g., `240`).
+    - **Force Keyframes:** Force keyframes via expression (e.g., `expr:gte(t,n_forced*5)`).
+    - **AV1 Specific Parameters:** Pass direct libsvt-av1 parameters (e.g., `scd=1:tune=0`). Scene Change Detection (scd) is controlled here.
 
 :::important
 **Legacy Intel Hardware (Broadwell or older)**
