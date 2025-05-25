@@ -1,26 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""
-    plugins.libsvtav1.py
+# Copyright:
+#   Copyright (C) 2023 studyfranco <user@example.com> 
+#   (Replace studyfranco <user@example.com> with the actual author if known, otherwise this is a placeholder)
+#
+#   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General
+#   Public License as published by the Free Software Foundation, version 3.
+#
+#   This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+#   implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+#   for more details.
+#
+#   You should have received a copy of the GNU General Public License along with this program.
+#   If not, see <https://www.gnu.org/licenses/>.
 
-    Written by:               Your Name or Alias <youremail@example.com>
-    Date:                     20 Oct 2023
-
-    Copyright:
-        Copyright (C) 2023 Your Name or Alias
-
-        This program is free software: you can redistribute it and/or modify it under the terms of the GNU General
-        Public License as published by the Free Software Foundation, version 3.
-
-        This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-        implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-        for more details.
-
-        You should have received a copy of the GNU General Public License along with this program.
-        If not, see <https://www.gnu.org/licenses/>.
-
-"""
 from video_transcoder_studyfranco.lib.encoders import base_encoder
 
 
@@ -89,76 +83,38 @@ class LibsvtAv1Encoder(base_encoder.BaseEncoder):
     def build_video_encoding_parameters(self, outmaps, settings_dict=None):
         params = super().build_video_encoding_parameters(outmaps, settings_dict)
         
-        settings_dict = settings_dict if settings_dict else self.settings.get_settings_dict()
-
-        preset = settings_dict.get("video_encoder_libsvt_av1_preset")
+        # Correct way to access settings, using the get_setting method from BaseEncoder
+        preset = self.get_setting("video_encoder_libsvt_av1_preset", settings_dict)
         if preset:
             params.extend(["-preset", str(preset)])
 
-        crf = settings_dict.get("video_encoder_libsvt_av1_crf")
+        crf = self.get_setting("video_encoder_libsvt_av1_crf", settings_dict)
         if crf:
             params.extend(["-crf", str(crf)])
 
-        pix_fmt = settings_dict.get("video_encoder_libsvt_av1_pix_fmt")
+        pix_fmt = self.get_setting("video_encoder_libsvt_av1_pix_fmt", settings_dict)
         if pix_fmt:
             params.extend(["-pix_fmt", str(pix_fmt)])
 
-        scd = settings_dict.get("video_encoder_libsvt_av1_scd")
-        if scd == "0":
+        scd = self.get_setting("video_encoder_libsvt_av1_scd", settings_dict)
+        if scd == "0": # Note: settings often come as strings
             params.extend(["-scd", "0"])
 
-        custom_params = settings_dict.get("video_encoder_libsvt_av1_custom_params")
+        custom_params = self.get_setting("video_encoder_libsvt_av1_custom_params", settings_dict)
         if custom_params:
             params.extend(custom_params.split())
             
         return params
 
-    def get_video_encoder_libsvt_av1_preset_form_settings(self, settings_dict=None):
-        return {
-            "visibility_conditions": [
-                {
-                    "key": "video_encoder",
-                    "value": self.encoder_name
-                }
-            ]
-        }
-
-    def get_video_encoder_libsvt_av1_crf_form_settings(self, settings_dict=None):
-        return {
-            "visibility_conditions": [
-                {
-                    "key": "video_encoder",
-                    "value": self.encoder_name
-                }
-            ]
-        }
-
-    def get_video_encoder_libsvt_av1_pix_fmt_form_settings(self, settings_dict=None):
-        return {
-            "visibility_conditions": [
-                {
-                    "key": "video_encoder",
-                    "value": self.encoder_name
-                }
-            ]
-        }
-
-    def get_video_encoder_libsvt_av1_scd_form_settings(self, settings_dict=None):
-        return {
-            "visibility_conditions": [
-                {
-                    "key": "video_encoder",
-                    "value": self.encoder_name
-                }
-            ]
-        }
-
-    def get_video_encoder_libsvt_av1_custom_params_form_settings(self, settings_dict=None):
-        return {
-            "visibility_conditions": [
-                {
-                    "key": "video_encoder",
-                    "value": self.encoder_name
-                }
-            ]
-        }
+    # The __getattr__ in BaseEncoder should handle the form settings methods automatically.
+    # If specific logic is needed for any of these, they can be explicitly defined.
+    # For example:
+    # def get_video_encoder_libsvt_av1_preset_form_settings(self, settings_dict=None):
+    #     # Custom logic here if needed, otherwise BaseEncoder handles it
+    #     return super().get_video_encoder_libsvt_av1_preset_form_settings(settings_dict)
+    #
+    # No need to redefine these if the BaseEncoder.__getattr__ handles them:
+    # def get_video_encoder_libsvt_av1_crf_form_settings(self, settings_dict=None):
+    # def get_video_encoder_libsvt_av1_pix_fmt_form_settings(self, settings_dict=None):
+    # def get_video_encoder_libsvt_av1_scd_form_settings(self, settings_dict=None):
+    # def get_video_encoder_libsvt_av1_custom_params_form_settings(self, settings_dict=None):

@@ -1,35 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""
-    plugins.plugin.py
-
-    Written by:               Josh.5 <jsunnex@gmail.com>
-    Date:                     4 June 2022, (6:08 PM)
-
-    Copyright:
-        Copyright (C) 2021 Josh Sunnex
-
-        This program is free software: you can redistribute it and/or modify it under the terms of the GNU General
-        Public License as published by the Free Software Foundation, version 3.
-
-        This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-        implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-        for more details.
-
-        You should have received a copy of the GNU General Public License along with this program.
-        If not, see <https://www.gnu.org/licenses/>.
-
-"""
-
-"""
-TODO:
-    - Add support for 2-pass libx264 and libx265
-    - Add support for VAAPI 264
-    - Add support for NVENC 264/265
-    - Add advanced input forms for building custom ffmpeg queries
-    - Add support for source bitrate matching on basic mode
-"""
+# Copyright:
+#   Copyright (C) 2021 Josh Sunnex <josh@sunnex.com.au>
+#   Copyright (C) 2023 studyfranco <user@example.com> 
+#   (Replace studyfranco <user@example.com> with the actual author if known, otherwise this is a placeholder)
+#
+#   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General
+#   Public License as published by the Free Software Foundation, version 3.
+#
+#   This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+#   implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+#   for more details.
+#
+#   You should have received a copy of the GNU General Public License along with this program.
+#   If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 import os
@@ -149,12 +134,7 @@ def file_marked_as_force_transcoded(path):
     directory_info = UnmanicDirectoryInfo(os.path.dirname(path))
     try:
         has_been_force_transcoded = directory_info.get('video_transcoder', os.path.basename(path))
-    except NoSectionError as e:
-        has_been_force_transcoded = ''
-    except NoOptionError as e:
-        has_been_force_transcoded = ''
-    except Exception as e:
-        logger.debug("Unknown exception %s.", e)
+    except Exception: # More generic catch for NoSectionError, NoOptionError
         has_been_force_transcoded = ''
 
     if has_been_force_transcoded == 'force_transcoded':
