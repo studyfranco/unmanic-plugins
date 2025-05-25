@@ -47,17 +47,26 @@ This plugin now includes support for AV1 encoding using the SVT-AV1 (Scalable Vi
 *   **CRF (Constant Rate Factor):** Adjusts the output quality. This is a slider ranging from `0` to `63`.
     *   Lower values result in higher quality and larger file sizes. Higher values result in lower quality and smaller file sizes.
     *   A common starting point for good quality is typically between `25` and `35` for 1080p content.
-*   **Pixel Format (pix_fmt):** Specifies the pixel format for the output video (e.g., `yuv420p`, `yuv420p10le` for 10-bit).
-    *   Leave empty to use the source pixel format. `yuv420p10le` is a common choice for 10-bit AV1.
+*   **Pixel Format (pix_fmt):** Specifies the pixel format for the output video. This is a dropdown list.
+    *   **Default: "Auto (based on source)"**. If "Auto" is selected, the `-pix_fmt` flag will not be passed to FFmpeg, allowing FFmpeg or the encoder to decide based on the input or encoder defaults.
+    *   Available options:
+        *   "Auto (based on source)"
+        *   "yuv420p" (8-bit SDR)
+        *   "yuv420p10le" (10-bit HDR/SDR)
+        *   "yuv422p10le" (10-bit 4:2:2)
+        *   "yuv444p10le" (10-bit 4:4:4)
+    *   Select a specific format if your source or desired output requires it (e.g., `yuv420p10le` for 10-bit AV1 encodes).
 *   **GOP Size:** Sets the Group of Pictures (GOP) size, which defines the keyframe interval.
+    *   **Default: "240"**.
     *   This is passed to FFmpeg as the `-g <value>` parameter.
-    *   For example, a value of `240` for a 24fps video would result in a keyframe every 10 seconds. Leave empty for the encoder's default.
+    *   For example, a value of `240` for a 24fps video would result in a keyframe every 10 seconds. Leave empty for the encoder's default (though 240 is the plugin default).
 *   **Force Keyframes:** Allows for forcing keyframes at specific timestamps or intervals using an FFmpeg expression.
     *   This is passed as the `-force_key_frames <expression>` parameter.
     *   Example: `expr:gte(t,n_forced*5)` to force a keyframe every 5 seconds. Leave empty if not needed.
 *   **AV1 Specific Parameters:** Allows you to pass a string of parameters directly to the libsvt-av1 encoder using the `-svtav1-params` flag.
+    *   **Default:** `"scd=1:enable-overlays=1:tune=2:aq-mode=2:tile-rows=1:tile-columns=1:la-depth=40:enable-cdef=1:enable-restoration=1:enable-qm=1:enable-variance-boost=1:fast-decode=1"`
     *   This is for advanced tuning or enabling specific features.
-    *   Parameters are colon-separated, e.g., `scd=1:tune=0:enable-overlays=1`.
+    *   Parameters are colon-separated, e.g., `scd=1:tune=0`.
     *   Scene Change Detection (SCD) can be controlled here by including `scd=0` (disable) or `scd=1` (enable) in the string. Refer to the SVT-AV1 documentation for all available parameters.
 
 ## Configuration

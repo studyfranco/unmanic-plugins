@@ -34,10 +34,10 @@ For information on the available encoder settings:
   - **Key Options:**
     - **Preset:** Balances speed and quality (0 for slowest/best quality to 12 for fastest). Default is 8.
     - **CRF:** Constant Rate Factor (slider 0-63). Lower is better quality.
-    - **Pixel Format:** Output pixel format (e.g., `yuv420p10le`).
-    - **GOP Size:** Keyframe interval (e.g., `240`).
+    - **Pixel Format:** Select menu for output pixel format (e.g., `yuv420p10le`). Default is "Auto (based on source)".
+    - **GOP Size:** Keyframe interval. Default is `240`.
     - **Force Keyframes:** Force keyframes via expression (e.g., `expr:gte(t,n_forced*5)`).
-    - **AV1 Specific Parameters:** Pass direct libsvt-av1 parameters (e.g., `scd=1:tune=0`). Scene Change Detection (scd) is controlled here.
+    - **AV1 Specific Parameters:** Pass direct libsvt-av1 parameters. Has a new complex default string including settings for `scd`, `tune`, `aq-mode`, etc. Scene Change Detection (scd) is controlled here.
 
 :::important
 **Legacy Intel Hardware (Broadwell or older)**

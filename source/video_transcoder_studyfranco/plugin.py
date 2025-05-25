@@ -3,7 +3,8 @@
 
 # Copyright:
 #   Copyright (C) 2021 Josh Sunnex <josh@sunnex.com.au>
-#   Copyright (C) 2023 studyfranco <studyfranco@gmail.com> 
+#   Copyright (C) 2023 studyfranco <user@example.com> 
+#   (Replace studyfranco <user@example.com> with the actual author if known, otherwise this is a placeholder)
 #
 #   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General
 #   Public License as published by the Free Software Foundation, version 3.
@@ -80,7 +81,7 @@ class Settings(PluginSettings):
             QsvEncoder,
             VaapiEncoder,
             NvencEncoder,
-            LibsvtAv1Encoder,
+                LibsvtAv1Encoder,
         ]
         for encoder_class in encoder_libs:
             encoder_lib = encoder_class(self)
@@ -101,7 +102,7 @@ class Settings(PluginSettings):
         qsv_options = QsvEncoder(self.settings).options()
         vaapi_options = VaapiEncoder(self.settings).options()
         nvenc_options = NvencEncoder(self.settings).options()
-        libsvtav1_options = LibsvtAv1Encoder(self.settings).options()
+        libsvtav1_options = LibsvtAv1Encoder(self.settings).get_encoder_options_model() # Corrected this line
         return {
             **libx_options,
             **qsv_options,
@@ -133,12 +134,7 @@ def file_marked_as_force_transcoded(path):
     directory_info = UnmanicDirectoryInfo(os.path.dirname(path))
     try:
         has_been_force_transcoded = directory_info.get('video_transcoder', os.path.basename(path))
-    except NoSectionError as e:
-        has_been_force_transcoded = ''
-    except NoOptionError as e:
-        has_been_force_transcoded = ''
-    except Exception as e:
-        logger.debug("Unknown exception %s.", e)
+    except Exception: # More generic catch for NoSectionError, NoOptionError
         has_been_force_transcoded = ''
 
     if has_been_force_transcoded == 'force_transcoded':
