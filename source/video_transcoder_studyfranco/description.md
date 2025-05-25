@@ -1,4 +1,3 @@
-
 ---
 
 ##### Links:
@@ -6,6 +5,11 @@
 - [Support](https://unmanic.app/discord)
 - [Issues/Feature Requests](https://github.com/Unmanic/plugin.video_transcoder/issues)
 - [Pull Requests](https://github.com/Unmanic/plugin.video_transcoder/pulls)
+
+---
+
+##### Overview:
+This plugin transcodes video streams using various encoders, including libx264, libx265, QSV, VAAPI, NVENC, and now **libsvt-av1** for AV1 encoding. AV1 offers improved compression over older codecs.
 
 ---
 
@@ -25,6 +29,14 @@ For information on the available encoder settings:
   - [FFmpeg - HWAccelIntro](https://trac.ffmpeg.org/wiki/HWAccelIntro#NVENC)
   - [NVIDIA GPU compatibility chart](https://developer.nvidia.com/video-encode-and-decode-gpu-support-matrix-new)
   - [NVIDIA FFmpeg Transcoding Guide](https://developer.nvidia.com/blog/nvidia-ffmpeg-transcoding-guide/)
+- **libsvt-av1 (AV1 Encoding)**
+  - [SVT-AV1 Encoder User Guide](https://gitlab.com/AOMediaCodec/SVT-AV1/-/blob/master/Docs/svt-av1_encoder_user_guide.md)
+  - **Key Options:**
+    - **Preset:** Balances speed and quality (e.g., `8` for default, `12` for fastest, `4` for slowest).
+    - **CRF:** Constant Rate Factor for quality control (e.g., `30`).
+    - **Pixel Format:** Output pixel format (e.g., `yuv420p10le`).
+    - **Scene Change Detection:** Enable/Disable.
+    - **Custom Parameters:** For additional SVT-AV1 specific flags.
 
 :::important
 **Legacy Intel Hardware (Broadwell or older)**
@@ -58,7 +70,7 @@ ffmpeg \
     -map 0:0 -map 0:1 \
     -c:v:0 <CUSTOM VIDEO OPTIONS HERE> \
     -c:a:0 copy \
-    -y /path/to/output/video.mkv 
+    -y /path/to/output/video.mkv
 ```
 :::
 
