@@ -53,6 +53,15 @@ This plugin now includes support for AV1 encoding using the SVT-AV1 (Scalable Vi
     *   `Disable` might be useful in specific scenarios or for faster encoding.
 *   **Custom Parameters:** Allows you to pass additional command-line parameters directly to the libsvt-av1 encoder.
     *   Useful for advanced tuning, e.g., `-svtav1-params tune=0`. Refer to the SVT-AV1 documentation for available parameters.
+Additionally, advanced parameters for `libsvt-av1` are available, providing fine-grained control over aspects like scene change detection, adaptive quantization, loop filters, and more. FFmpeg global options for GOP size and scene detection can also be configured. Refer to `description.md` for a full list of advanced settings.
+
+## Key Features and Workflow Changes
+
+### HDR Metadata Preservation
+The plugin now supports HDR metadata preservation. When your input video contains HDR10 metadata (such as color primaries, transfer characteristics, mastering display information, and max content light level), these values will be detected and passed through to the AV1 encoded output, ensuring your HDR content retains its intended color information.
+
+### Processing Workflow
+The plugin now employs a robust demux -> transcode -> remux workflow. The input file's video track is first extracted using `mkvmerge`. This isolated video track is then transcoded to AV1 using `ffmpeg` with the configured settings. Finally, the newly transcoded AV1 video track is remuxed with all audio, subtitle, attachment, and chapter tracks from the original file using `mkvmerge`, creating the output file.
 
 ## Configuration
 The plugin settings can be accessed through the Unmanic UI. You can select your desired video encoder and configure its specific options based on your needs.

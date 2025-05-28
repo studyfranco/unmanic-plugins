@@ -38,6 +38,21 @@ For information on the available encoder settings:
     - **Scene Change Detection:** Enable/Disable.
     - **Custom Parameters:** For additional SVT-AV1 specific flags.
 
+#### SVT-AV1 Advanced Settings
+These settings provide finer control when using the `libsvtav1` encoder and are typically applied when not in 'basic' mode.
+
+-   **scd**: `integer` (0 or 1), default `1`. Controls Scene Change Detection within the SVT-AV1 encoder. `0` to disable, `1` to enable.
+-   **enable_overlays**: `integer` (0 or 1), default `1`. Enables film grain synthesis and other overlays. `0` to disable, `1` to enable.
+-   **tune**: `integer` (0, 1, or 2), default `2`. `0` for visual quality (produces better grain retention), `1` for PSNR/SSIM optimization, `2` for VMAF optimization.
+-   **aq_mode**: `integer` (0-4), default `2`. Adaptive Quantization mode. `0` off, `1` variance-based, `2` complexity-based (default), `3` delta-q based, `4` aq-variance and cyclic refresh.
+-   **enable_cdef**: `boolean` (true/false), default `true`. Enables the Constrained Directional Enhancement Filter.
+-   **enable_restoration**: `boolean` (true/false), default `true`. Enables the Loop Restoration Filter.
+-   **enable_qm**: `boolean` (true/false), default `true`. Enables Quantization Matrix for block-adaptive quantization.
+-   **enable_variance_boost**: `boolean` (true/false), default `true`. Enables variance boost for subjective quality.
+-   **additional_svtav1_params**: `string`, default `""`. Allows specifying additional SVT-AV1 parameters in `key=value:key=value` format.
+-   **sc_detection**: `integer` (0 or 1), default `1`. This is an FFmpeg global option (`-sc_detection`) used to control scene cut detection for FFmpeg itself. `0` to disable, `1` to enable.
+-   **gop_size**: `integer` (≥ 1), default `240`. This is an FFmpeg global option (`-g`) specifying the Group of Pictures size.
+
 :::important
 **Legacy Intel Hardware (Broadwell or older)**
 
