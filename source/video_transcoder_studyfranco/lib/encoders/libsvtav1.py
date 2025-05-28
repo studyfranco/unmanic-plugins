@@ -27,6 +27,9 @@ class LibsvtAv1Encoder:
 
     def __init__(self, settings):
         self.settings = settings
+        self.sc_detection = None
+        self.g = None
+        self.svtav1_params = None
 
     def provides(self):
         return {
@@ -40,7 +43,10 @@ class LibsvtAv1Encoder:
         return {
             "preset":                     "4",
             "encoder_ratecontrol_method": "CRF",
-            "constant_quality_scale":     "23"
+            "constant_quality_scale":     "23",
+            "sc_detection":               "1",
+            "g":                          "240",
+            "svtav1_params":              "scd=1:enable-overlays=1:tune=2:aq-mode=2:enable-cdef=1:enable-restoration=1:enable-qm=1:enable-variance-boost=1"
         }
 
     def generate_default_args(self):
@@ -92,6 +98,14 @@ class LibsvtAv1Encoder:
             stream_encoding += [
                 '-crf', str(self.settings.get_setting('constant_quality_scale')),
             ]
+
+        if self.settings.get_setting('mode') in ['advanced']:
+            if self.settings.get_setting('sc_detection'):
+                stream_encoding += ['-sc_detection', str(self.settings.get_setting('sc_detection'))]
+            if self.settings.get_setting('g'):
+                stream_encoding += ['-g', str(self.settings.get_setting('g'))]
+            if self.settings.get_setting('svtav1_params'):
+                stream_encoding += ['-svtav1-params', str(self.settings.get_setting('svtav1_params'))]
 
         return stream_encoding
 
@@ -147,7 +161,7 @@ class LibsvtAv1Encoder:
                 },
             ],
         }
-        if self.settings.get_setting('mode') not in ['standard']:
+        if self.settings.get_setting('mode') not in ['standard', 'advanced']:
             values["display"] = "hidden"
         return values
 
@@ -180,10 +194,50 @@ class LibsvtAv1Encoder:
                 "max": 51,
             },
         }
-        if self.settings.get_setting('mode') not in ['standard']:
+        if self.settings.get_setting('mode') not in ['standard', 'advanced']:
             values["display"] = "hidden"
         if self.settings.get_setting('encoder_ratecontrol_method') not in ['CRF']:
             values["display"] = "hidden"
         if self.settings.get_setting('video_encoder') in ['libsvtav1']:
             values["description"] = "Default value for libsvtav1 = 23"
+        return values
+
+    def get_sc_detection_form_settings(self):
+        values = {
+            "label":          "Scene Change Detection",
+            "sub_setting":    True,
+            "input_type":     "select",
+            "select_options": [
+                {
+                    "value": "0",
+                    "label": "Disabled",
+                },
+                {
+                    "value": "1",
+                    "label": "Enabled",
+                },
+            ],
+        }
+        if self.settings.get_setting('mode') not in ['advanced']:
+            values["display"] = "hidden"
+        return values
+
+    def get_g_form_settings(self):
+        values = {
+            "label":       "GOP Size",
+            "sub_setting": True,
+            "input_type":  "text",
+        }
+        if self.settings.get_setting('mode') not in ['advanced']:
+            values["display"] = "hidden"
+        return values
+
+    def get_svtav1_params_form_settings(self):
+        values = {
+            "label":       "SVT-AV1 Params",
+            "sub_setting": True,
+            "input_type":  "textarea",
+        }
+        if self.settings.get_setting('mode') not in ['advanced']:
+            values["display"] = "hidden"
         return values

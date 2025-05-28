@@ -35,13 +35,14 @@ logger = logging.getLogger("Unmanic.Plugin.video_transcoder")
 
 
 class PluginStreamMapper(StreamMapper):
-    def __init__(self):
+    def __init__(self, hdr_metadata=None):
         super(PluginStreamMapper, self).__init__(logger, ['video', 'data', 'attachment'])
         self.abspath = None
         self.settings = None
         self.complex_video_filters = {}
         self.crop_value = None
         self.forced_encode = False
+        self.hdr_metadata = hdr_metadata if hdr_metadata is not None else {}
 
     def set_default_values(self, settings, abspath, probe):
         """
@@ -332,6 +333,32 @@ class PluginStreamMapper(StreamMapper):
                     generic_kwargs, stream_encoding_args = nvenc_encoder.args(stream_info, stream_id)
                     self.set_ffmpeg_generic_options(**generic_kwargs)
                     stream_encoding += stream_encoding_args
+                
+                # Add HDR metadata flags if available
+                if self.hdr_metadata:
+                    logger.info("Applying HDR metadata to FFmpeg arguments: %s", self.hdr_metadata)
+                    if self.hdr_metadata.get('color_primaries'):
+                        stream_encoding.extend(['-color_primaries', self.hdr_metadata['color_primaries']])
+                    if self.hdr_metadata.get('color_trc'):
+                        stream_encoding.extend(['-color_trc', self.hdr_metadata['color_trc']])
+                    if self.hdr_metadata.get('colorspace'):
+                        stream_encoding.extend(['-colorspace', self.hdr_metadata['colorspace']])
+                    # For master_display, ffmpeg expects G(gx,gy)B(bx,by)R(rx,ry)WP(wpx,wpy)L(maxl,minl)
+                    # ffprobe gives R()G()B()WP()L()
+                    # We will attempt to pass the raw string for now if libsvtav1 can take it via svtav1-params
+                    # or if a direct ffmpeg flag supports it for AV1.
+                    # A more robust solution would parse and reformat, or use specific -svtav1-params.
+                    if self.hdr_metadata.get('master_display_data_string'):
+                        # This is a placeholder. The actual flag might need to be part of -svtav1-params
+                        # e.g., -svtav1-params master-display=...
+                        # Or, if ffmpeg has a direct flag that libsvtav1 respects:
+                        stream_encoding.extend(['-master_display', self.hdr_metadata['master_display_data_string']])
+                        logger.info("Added master_display: %s", self.hdr_metadata['master_display_data_string'])
+                    if self.hdr_metadata.get('max_cll_data_string'):
+                        # Similar to master_display, this might need specific handling for libsvtav1
+                        stream_encoding.extend(['-max_cll', self.hdr_metadata['max_cll_data_string']])
+                        logger.info("Added max_cll: %s", self.hdr_metadata['max_cll_data_string'])
+
         elif codec_type in ['data']:
             if not self.settings.get_setting('apply_smart_filters'):
                 # If smart filters are not enabled, return 'False' to let the default mapping just copy the data stream
