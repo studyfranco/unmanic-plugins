@@ -38,6 +38,123 @@ from unmanic.libs.directoryinfo import UnmanicDirectoryInfo
 # Configure plugin logger
 logger = logging.getLogger("Unmanic.Plugin.video_transcoder")
 
+# --- Helper Functions for Demux-Transcode-Remux Workflow ---
+
+# Helper function to extract video track using mkvmerge
+def _demux(original_input_file, temp_dir, logger_instance):
+    """Helper function to demux the video track."""
+    logger_instance.info("Starting demux for %s", original_input_file)
+    output_video_track = os.path.join(temp_dir, "video_track.mkv")
+    cmd = ['mkvmerge', '-o', output_video_track, '--no-audio', '--no-subtitles', 
+           '--no-chapters', '--no-attachments', '--no-track-tags', 
+           '--video-tracks', '0', original_input_file]
+    logger_instance.info("Executing demux command: %s", " ".join(cmd))
+    
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=False, encoding='utf-8', errors='replace')
+        if result.returncode != 0:
+            logger_instance.error("Demuxing failed for %s. Return code: %s", original_input_file, result.returncode)
+            logger_instance.error("mkvmerge stderr: %s", result.stderr)
+            logger_instance.error("mkvmerge stdout: %s", result.stdout)
+            return None
+        logger_instance.info("Demuxing successful, mkvmerge stdout: %s", result.stdout)
+        if result.stderr: # mkvmerge often outputs warnings/info to stderr
+            logger_instance.info("mkvmerge stderr (demux): %s", result.stderr)
+        return output_video_track
+    except Exception as e:
+        logger_instance.error("Exception during demuxing: %s", str(e), exc_info=True)
+        return None
+
+# Helper function to transcode the demuxed video track using ffmpeg
+def _transcode(input_file_to_transcode, temp_dir, settings_obj, original_probe_obj, 
+               hdr_metadata_dict, ffmpeg_parser_obj, logger_instance, worker_log_list):
+    """Helper function to transcode the video track."""
+    logger_instance.info("Starting transcode for %s", input_file_to_transcode)
+    output_av1_track = os.path.join(temp_dir, "video_av1.mkv")
+
+    mapper = plugin_stream_mapper.PluginStreamMapper(hdr_metadata=hdr_metadata_dict)
+    
+    # Use original file's path and probe for set_default_values for decisions based on original file context
+    original_file_path = original_probe_obj.get_probe().get('format', {}).get('filename', input_file_to_transcode)
+    mapper.set_default_values(settings_obj, original_file_path, original_probe_obj)
+    
+    # Set the actual input and output for the ffmpeg command
+    mapper.set_input_file(input_file_to_transcode)
+    mapper.set_output_file(output_av1_track)
+    
+    ffmpeg_args = mapper.get_ffmpeg_args()
+    ffmpeg_cmd = ['ffmpeg'] + ffmpeg_args
+    
+    # Log the full FFmpeg command for debugging and verification
+    logger_instance.info("Full FFmpeg command for transcoding: %s", " ".join(ffmpeg_cmd))
+    logger_instance.debug("FFmpeg command list for transcoding: %s", ffmpeg_cmd)
+    # Note: The line below was in the original plan, but logger_instance.info is already used above.
+    # logger_instance.info("Executing transcode command: %s", " ".join(ffmpeg_cmd)) 
+
+    # Probe the actual input to ffmpeg (demuxed track) for accurate progress parsing
+    transcode_input_probe = Probe(logger_instance, allowed_mimetypes=['video'])
+    if not transcode_input_probe.file(input_file_to_transcode):
+        logger_instance.error("Failed to probe input for transcoding: %s", input_file_to_transcode)
+        return None
+    ffmpeg_parser_obj.set_probe(transcode_input_probe)
+
+    try:
+        process = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, 
+                                   universal_newlines=True, encoding='utf-8', errors='replace', bufsize=1)
+        for line in iter(process.stdout.readline, ''):
+            line_strip = line.strip()
+            if line_strip: # Avoid logging empty lines
+                logger_instance.debug("FFMPEG: %s", line_strip)
+                if worker_log_list is not None:
+                    worker_log_list.append(line_strip)
+                progress = ffmpeg_parser_obj.parse_progress(line_strip)
+                if progress and 'percent' in progress:
+                    try:
+                        percent_val = float(progress['percent'])
+                        logger_instance.info("FFMPEG progress: {:.2f}%".format(percent_val))
+                    except ValueError:
+                        logger_instance.info("FFMPEG progress: {}".format(progress['percent']))
+        process.stdout.close()
+        process.wait()
+        if process.returncode != 0:
+            logger_instance.error("Transcoding failed for %s. Return code: %s", input_file_to_transcode, process.returncode)
+            # worker_log_list already contains ffmpeg output
+            return None
+        logger_instance.info("Transcoding successful: %s", output_av1_track)
+        return output_av1_track
+    except Exception as e:
+        logger_instance.error("Exception during transcoding: %s", str(e), exc_info=True)
+        return None
+
+# Helper function to remux the transcoded video with other tracks using mkvmerge
+def _remux(transcoded_av1_file, original_input_file, final_output_file, logger_instance):
+    """Helper function to remux the transcoded video with other tracks from the original file."""
+    logger_instance.info("Starting remux: video from %s, other tracks from %s, output to %s", 
+                       transcoded_av1_file, original_input_file, final_output_file)
+    cmd = ['mkvmerge', '-o', final_output_file, 
+           '--video-tracks', '0', transcoded_av1_file, 
+           '--audio-tracks', 'all', 
+           '--subtitle-tracks', 'all', 
+           '--attachments', 'all', 
+           '--chapters', 
+           original_input_file]
+    logger_instance.info("Executing remux command: %s", " ".join(cmd))
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=False, encoding='utf-8', errors='replace')
+        if result.returncode != 0:
+            logger_instance.error("Remuxing failed. Return code: %s", result.returncode)
+            logger_instance.error("mkvmerge stderr: %s", result.stderr)
+            logger_instance.error("mkvmerge stdout: %s", result.stdout)
+            return False
+        logger_instance.info("Remuxing successful, mkvmerge stdout: %s", result.stdout)
+        if result.stderr: # mkvmerge often outputs warnings/info to stderr
+            logger_instance.info("mkvmerge stderr (remux): %s", result.stderr)
+        return True
+    except Exception as e:
+        logger_instance.error("Exception during remuxing: %s", str(e), exc_info=True)
+        return False
+
 
 class Settings(PluginSettings):
 
@@ -203,7 +320,7 @@ def on_library_management_file_test(data):
 
 def on_worker_process(data):
     """
-    Runner function - implements a demux-transcode-remux workflow.
+    Runner function - implements a demux-transcode-remux workflow using helper functions.
     """
     # Initialization
     logger.info("Starting demux-transcode-remux process for file: %s", data.get('file_in'))
@@ -212,17 +329,17 @@ def on_worker_process(data):
     data['repeat'] = False
 
     settings = Settings(library_id=data.get('library_id'))
-    abspath = data.get('file_in')
+    abspath = data.get('file_in') # This is the original_input_file
 
     original_probe = Probe(logger, allowed_mimetypes=['video'])
     if not original_probe.file(abspath):
         logger.error("Failed to probe original file: %s", abspath)
-        data['worker_log'].append("Error: Failed to probe original file.")
-        return # Stop processing if initial probe fails
+        if 'worker_log' in data: data['worker_log'].append("Error: Failed to probe original file.")
+        return 
 
     ffmpeg_parser = Parser(logger)
 
-    # Nested helper function for HDR metadata parsing
+    # Nested helper function for HDR metadata parsing (remains here as it's used before helpers)
     def parse_mastering_display_metadata(metadata_str):
         patterns = {
             'R_x': r"R\(x=([0-9\.]+)", 'R_y': r"R\(x=[0-9\.]+,y=([0-9\.]+)\)",
@@ -237,8 +354,7 @@ def on_worker_process(data):
             if match: values[key] = match.group(1)
             else:
                 logger.warning(f"Could not parse {key} from mastering display metadata: {metadata_str}")
-                return metadata_str # Return original on partial failure, to allow potential direct passthrough
-        
+                return metadata_str
         try:
             g_x_scaled = int(float(values.get('G_x', '0')) * 50000)
             g_y_scaled = int(float(values.get('G_y', '0')) * 50000)
@@ -258,24 +374,50 @@ def on_worker_process(data):
 
     # HDR Metadata Detection
     hdr_metadata = {}
-    probe_streams = original_probe.get('streams', [])
-    for stream in probe_streams:
-        if stream.get('codec_type') == 'video':
-            color_space = stream.get('color_space')
-            color_primaries = stream.get('color_primaries')
-            color_transfer = stream.get('color_transfer')
-            side_data_list = stream.get('side_data_list', [])
-            for side_data in side_data_list:
-                if side_data.get('side_data_type') == 'Mastering display metadata':
-                    raw_master_display_str = side_data.get('mastering_display_metadata')
-                    if raw_master_display_str:
-                        hdr_metadata['master_display_data_string'] = parse_mastering_display_metadata(raw_master_display_str)
-                    if side_data.get('color_primaries'): color_primaries = side_data.get('color_primaries')[0]
-                    if side_data.get('color_transfer'): color_transfer = side_data.get('color_transfer')[0]
-                    if side_data.get('color_space'): color_space = side_data.get('color_space')[0]
-                elif side_data.get('side_data_type') == 'Content light level metadata':
-                    hdr_metadata['max_cll_data_string'] = f"{side_data.get('max_content', 0)},{side_data.get('max_frame_average_light_level', 0)}"
-            if color_space: hdr_metadata['colorspace'] = color_space
+    video_streams = [s for s in original_probe.get('streams', []) if s.get('codec_type') == 'video']
+    if video_streams:
+        main_video_stream = video_streams[0]
+
+        # Extract basic color metadata from main video stream
+        # These will be used if not overridden by more specific side data (though we simplify this for now)
+        if main_video_stream.get('color_space'):
+            hdr_metadata['colorspace'] = main_video_stream.get('color_space')
+        if main_video_stream.get('color_primaries'):
+            hdr_metadata['color_primaries'] = main_video_stream.get('color_primaries')
+        # FFmpeg uses 'color_trc' for transfer characteristics
+        if main_video_stream.get('color_transfer'):
+            hdr_metadata['color_trc'] = main_video_stream.get('color_transfer')
+
+        side_data_list = main_video_stream.get('side_data_list', [])
+        for side_data in side_data_list:
+            side_data_type = side_data.get('side_data_type')
+            if side_data_type == 'Mastering display metadata':
+                raw_master_display_str = side_data.get('value') # Use 'value' for mastering display string
+                if raw_master_display_str:
+                    hdr_metadata['master_display_data_string'] = parse_mastering_display_metadata(raw_master_display_str)
+                # According to the simplified plan, we are not re-extracting color space/primaries/transfer from here
+                # as the main stream info is generally sufficient and structure of these within side_data can vary.
+            elif side_data_type == 'Content light level metadata':
+                # Use specified keys: max_content_light_level, max_picture_average_light_level
+                # Fallback to common ffprobe keys if specific ones are not found.
+                max_content = side_data.get('max_content_light_level', side_data.get('max_content'))
+                max_average = side_data.get('max_picture_average_light_level', side_data.get('max_frame_average_light_level'))
+                if max_content is not None and max_average is not None:
+                    hdr_metadata['max_cll_data_string'] = f"{max_content},{max_average}"
+        
+        if hdr_metadata:
+            logger.info("Detected HDR metadata: %s", hdr_metadata)
+    else:
+        logger.info("No video streams found in the original probe data.")
+    
+    final_mkv_out = os.path.splitext(data.get('file_out'))[0] + ".mkv"
+                    # The following lines for updating color_primaries, color_transfer, color_space
+                    # from mastering display side_data were part of the original code.
+                    # These specific sub-keys ('primaries', 'transfer_characteristics', 'matrix_coefficients')
+                    # might not always be present directly under 'Mastering display metadata' side data in ffprobe.
+                    # It's safer to rely on the top-level stream info for these unless ffprobe structure guarantees them here.
+                    # For now, retaining the logic as it was, but noting this as a potential point of review based on actual ffprobe outputs.
+                    if side_data.get('color_primaries'): color_primaries = side_data.get('color_primaries')[0] # This was in original, but 'primaries' might be the key
             if color_primaries: hdr_metadata['color_primaries'] = color_primaries
             if color_transfer: hdr_metadata['color_trc'] = color_transfer
             if hdr_metadata:
