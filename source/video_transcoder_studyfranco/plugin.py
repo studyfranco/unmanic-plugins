@@ -18,14 +18,14 @@
 import logging
 import os
 
-from video_transcoder.lib import plugin_stream_mapper
-from video_transcoder.lib.ffmpeg import Parser, Probe
-from video_transcoder.lib.global_settings import GlobalSettings
-from video_transcoder.lib.encoders.libx import LibxEncoder
-from video_transcoder.lib.encoders.qsv import QsvEncoder
-from video_transcoder.lib.encoders.vaapi import VaapiEncoder
-from video_transcoder.lib.encoders.nvenc import NvencEncoder
-from video_transcoder.lib.encoders.libsvtav1 import LibsvtAv1Encoder
+from video_transcoder_studyfranco.lib import plugin_stream_mapper
+from video_transcoder_studyfranco.lib.ffmpeg import Parser, Probe
+from video_transcoder_studyfranco.lib.global_settings import GlobalSettings
+from video_transcoder_studyfranco.lib.encoders.libx import LibxEncoder
+from video_transcoder_studyfranco.lib.encoders.qsv import QsvEncoder
+from video_transcoder_studyfranco.lib.encoders.vaapi import VaapiEncoder
+from video_transcoder_studyfranco.lib.encoders.nvenc import NvencEncoder
+from video_transcoder_studyfranco.lib.encoders.libsvtav1 import LibsvtAv1Encoder
 
 from unmanic.libs.unplugins.settings import PluginSettings
 from unmanic.libs.directoryinfo import UnmanicDirectoryInfo
