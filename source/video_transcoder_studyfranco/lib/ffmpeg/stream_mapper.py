@@ -82,7 +82,12 @@ class StreamMapper(object):
         ]
 
         # Set default Main options
-        self.main_options = []
+        self.main_options = ['-map', '0',
+                             '-movflags', 'use_metadata_tags',
+                             '-map_metadata', '0',
+                             '-copy_unknown',
+                             '-c', 'copy',
+                             ]
 
         # Set default Advanced options
         self.advanced_options = [
