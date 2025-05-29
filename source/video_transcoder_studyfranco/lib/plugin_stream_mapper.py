@@ -23,13 +23,13 @@
 """
 import logging
 
-from video_transcoder.lib import tools
-from video_transcoder.lib.encoders.libx import LibxEncoder
-from video_transcoder.lib.encoders.qsv import QsvEncoder
-from video_transcoder.lib.encoders.vaapi import VaapiEncoder
-from video_transcoder.lib.encoders.nvenc import NvencEncoder
-from video_transcoder.lib.encoders.libsvtav1 import LibsvtAv1Encoder
-from video_transcoder.lib.ffmpeg import StreamMapper
+from video_transcoder_studyfranco.lib import tools
+from video_transcoder_studyfranco.lib.encoders.libx import LibxEncoder
+from video_transcoder_studyfranco.lib.encoders.qsv import QsvEncoder
+from video_transcoder_studyfranco.lib.encoders.vaapi import VaapiEncoder
+from video_transcoder_studyfranco.lib.encoders.nvenc import NvencEncoder
+from video_transcoder_studyfranco.lib.encoders.libsvtav1 import LibsvtAv1Encoder
+from video_transcoder_studyfranco.lib.ffmpeg import StreamMapper
 
 # Configure plugin logger
 logger = logging.getLogger("Unmanic.Plugin.video_transcoder")

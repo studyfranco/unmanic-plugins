@@ -23,7 +23,7 @@
 """
 import subprocess
 
-from video_transcoder.lib import tools
+from video_transcoder_studyfranco.lib import tools
 
 supported_codecs = {
     "h264": {

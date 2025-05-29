@@ -25,7 +25,7 @@ import logging
 import re
 import subprocess
 
-from video_transcoder.lib.ffmpeg import StreamMapper
+from video_transcoder_studyfranco.lib.ffmpeg import StreamMapper
 
 image_video_codecs = [
     'alias_pix',
