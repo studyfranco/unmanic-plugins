@@ -12,5 +12,5 @@
         "on_worker_process": 1
     },
     "tags": "video,ffmpeg,av1",
-    "version": "0.1.8"
+    "version": "0.1.9"
 }
