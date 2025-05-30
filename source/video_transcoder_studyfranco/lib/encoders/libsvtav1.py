@@ -41,13 +41,13 @@ class LibsvtAv1Encoder:
             "preset":                     "4",
             "encoder_ratecontrol_method": "CRF",
             "constant_quality_scale":     "23",
-            "encoder_additional_params":  "no_additional_params",
-            "additional_params":           "",
             "tune":                        "1",
             "overlays":                    0,
             "variance_boost":              0,
-            "enable_qm":                   False,
+            "enable_qm":                   0,
             "qm_min":                      8,
+            "encoder_additional_params":  "no_additional_params",
+            "additional_params":           "",
         }
 
     def generate_default_args(self):
@@ -316,16 +316,16 @@ class LibsvtAv1Encoder:
             "input_type":     "select",
             "select_options": [
                 {
-                    "value": True,
+                    "value": 0,
                     "label": "No (Default)"
                 },
                 {
-                    "value": False,
+                    "value": 1,
                     "label": "Yes"
                 },
             ]
         }
-        self.__set_default_option(values['select_options'], 'enable_qm', default_option=False)
+        self.__set_default_option(values['select_options'], 'enable_qm', default_option=0)
         if self.settings.get_setting('mode') not in ['standard']:
             values["display"] = "hidden"
         return values
