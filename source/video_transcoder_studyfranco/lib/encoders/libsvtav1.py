@@ -209,7 +209,7 @@ class LibsvtAv1Encoder:
                 },
             ]
         }
-        self.__set_default_option(values['select_options'], 'encoder_additional_params', default_option='additional_params')
+        self.__set_default_option(values['select_options'], 'encoder_additional_params', default_option='no_additional_params')
         if self.settings.get_setting('mode') not in ['standard']:
             values["display"] = "hidden"
         return values
