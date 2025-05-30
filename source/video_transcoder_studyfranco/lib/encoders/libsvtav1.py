@@ -40,7 +40,8 @@ class LibsvtAv1Encoder:
         return {
             "preset":                     "4",
             "encoder_ratecontrol_method": "CRF",
-            "constant_quality_scale":     "23"
+            "constant_quality_scale":     "23",
+            "encoder_additional_params":  "no_additional_params",
         }
 
     def generate_default_args(self):
@@ -201,6 +202,10 @@ class LibsvtAv1Encoder:
                 {
                     "value": "additional_params",
                     "label": "SVT-AV1: Additional Parameters",
+                },
+                {
+                    "value": "no_additional_params",
+                    "label": "No Additional Parameters",
                 },
             ]
         }
