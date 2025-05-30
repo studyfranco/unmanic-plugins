@@ -312,6 +312,7 @@ class LibsvtAv1Encoder:
     def get_enable_qm_settings(self):
         values = {
             "label":          "SVT-AV1: Enable Quantization Matrix (enable-qm)",
+            "description":    "",
             "sub_setting":    True,
             "input_type":     "select",
             "select_options": [
@@ -343,7 +344,7 @@ class LibsvtAv1Encoder:
         }
         if self.settings.get_setting('mode') not in ['standard']:
             values["display"] = "hidden"
-        if not self.settings.get_setting('enable_qm'):
+        if (not self.settings.get_setting('enable_qm')):
             values["display"] = "hidden"
             
         return values
