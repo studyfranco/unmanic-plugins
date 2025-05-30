@@ -43,6 +43,11 @@ class LibsvtAv1Encoder:
             "constant_quality_scale":     "23",
             "encoder_additional_params":  "no_additional_params",
             "additional_params":           "",
+            "tune":                        "1",
+            "overlays":                    0,
+            "variance_boost":              0,
+            "enable_qm":                   False,
+            "qm_min":                      8,
         }
 
     def generate_default_args(self):
@@ -83,13 +88,34 @@ class LibsvtAv1Encoder:
             if self.settings.get_setting('video_encoder') in ['libsvtav1']:
                 default_crf = 23
             stream_encoding += ['-crf', str(default_crf)]
+            stream_encoding += ["-dolbyvision" "1"]
             return stream_encoding
+        
+        stav1_params = ["enable-stat-report=1"]
+        if self.settings.get_setting('tune'):
+            # Add the tune value
+            stav1_params += ['tune=' + str(self.settings.get_setting('tune'))]
+        
+        if self.settings.get_setting('overlays'):
+            # Enable overlays
+            stav1_params += ['enable-overlays=1']
+            
+        if self.settings.get_setting('variance_boost'):
+            # Enable variance boost
+            stav1_params += ['enable-variance-boost=1']
+            
+        if self.settings.get_setting('enable_qm'):
+            # Enable quantization matrix
+            stav1_params += ['enable-qm=1']
+            stav1_params += ['qm-min=' + str(self.settings.get_setting('qm_min'))]
 
         if self.settings.get_setting('encoder_additional_params') in ['additional_params'] and len(self.settings.get_setting('encoder_svtav1_additional_params')):
             # Add additional parameters for SVT-AV1
-            stream_encoding += ['-svtav1-params', self.settings.get_setting('encoder_svtav1_additional_params')]
-            
-        # Add the preset and tune
+            stav1_params += self.settings.get_setting('encoder_svtav1_additional_params')
+        
+        stream_encoding += ['-svtav1-params', ":".join(stav1_params)]
+        
+        # Add the preset
         if self.settings.get_setting('preset'):
             stream_encoding += ['-preset', str(self.settings.get_setting('preset'))]
 
@@ -98,6 +124,7 @@ class LibsvtAv1Encoder:
             stream_encoding += [
                 '-crf', str(self.settings.get_setting('constant_quality_scale')),
             ]
+        stream_encoding += ["-dolbyvision" "1"]
 
         return stream_encoding
 
@@ -192,6 +219,133 @@ class LibsvtAv1Encoder:
             values["display"] = "hidden"
         if self.settings.get_setting('video_encoder') in ['libsvtav1']:
             values["description"] = "Default value for libsvtav1 = 23"
+        return values
+    
+    def get_video_pix_fmt_form_settings(self):
+        values = {
+            "label":          "Pixel Format",
+            "description":    "Select the pixel format",
+            "input_type":     "select",
+            "select_options": [
+                {
+                    "value": "auto",
+                    "label": "Let ffmpeg decide (default)"
+                },
+                {
+                    "value": "yuv420p",
+                    "label": "yuv420p (8-bit, 4:2:0)"
+                },
+                {
+                    "value": "yuv420p10le",
+                    "label": "yuv420p10le (10-bit, 4:2:0)"
+                },
+            ],
+        }
+        if self.settings.get_setting('mode') not in ['standard']:
+            values["display"] = "hidden"
+        return values
+    
+    def get_tune_form_settings(self):
+        values = {
+            "label":          "SVT-AV1: Tune",
+            "description":    "VQ (Visual Quality), PSNR (Objective Quality), SSIM (Objective Quality).",
+            "sub_setting":    True,
+            "input_type":     "select",
+            "select_options": [
+                {
+                    "value": "0",
+                    "label": "VQ (Recommended for animes, cartoons, and other animated content)",
+                },
+                {
+                    "value": "1",
+                    "label": "PSNR (default)",
+                },
+                {
+                    "value": "2",
+                    "label": "SSIM (Recommended for movies, TV shows, and other live-action content)",
+                },
+            ]
+        }
+        if self.settings.get_setting('mode') not in ['standard']:
+            values["display"] = "hidden"
+        return values
+    
+    def get_overlays_form_settings(self):
+        values = {
+            "label":          "SVT-AV1: Enable Overlays",
+            "sub_setting":    True,
+            "input_type":     "select",
+            "select_options": [
+                {
+                    "value": 0,
+                    "label": "No (Default)",
+                },
+                {   "value": 1,
+                    "label": "Yes"
+                },
+            ]
+        }
+        if self.settings.get_setting('mode') not in ['standard']:
+            values["display"] = "hidden"
+        return values
+
+    def get_variance_boost_form_settings(self):
+        values = {
+            "label":          "SVT-AV1: Enable Variance Boost (enable-variance-boost)",
+            "sub_setting":    True,
+            "input_type":     "select",
+            "select_options": [
+                {
+                    "value": 0,
+                    "label": "No (Default)"
+                },
+                {
+                    "value": 1,
+                    "label": "Yes"
+                },
+            ]
+        }
+        if self.settings.get_setting('mode') not in ['standard']:
+            values["display"] = "hidden"
+        return values
+    
+    def get_enable_qm_settings(self):
+        values = {
+            "label":          "SVT-AV1: Enable Quantization Matrix (enable-qm)",
+            "sub_setting":    True,
+            "input_type":     "select",
+            "select_options": [
+                {
+                    "value": True,
+                    "label": "No (Default)"
+                },
+                {
+                    "value": False,
+                    "label": "Yes"
+                },
+            ]
+        }
+        self.__set_default_option(values['select_options'], 'enable_qm', default_option=False)
+        if self.settings.get_setting('mode') not in ['standard']:
+            values["display"] = "hidden"
+        return values
+
+    def get_qm_min_settings(self):
+        values = {
+            "label":          "SVT-AV1: Quantization Matrix Min (qm-min)",
+            "description":    "Specifies qm-min level (Default: 8).",
+            "sub_setting":    True,
+            "input_type":     "slider",
+            "slider_options": {
+                "min": 0,
+                "max": 14,
+            },
+        }
+        if self.settings.get_setting('mode') not in ['standard']:
+            values["display"] = "hidden"
+        if not self.settings.get_setting('enable_qm'):
+            values["display"] = "hidden"
+            
         return values
     
     def get_encoder_additional_params_form_settings(self):

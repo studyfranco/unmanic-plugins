@@ -494,7 +494,7 @@ class StreamMapper(object):
             '-map_metadata', '0',
             '-copy_unknown',
             ]
-        args += self.stream_mapping
+        #args += self.stream_mapping
         args += [
             '-c', 'copy',
             ]
