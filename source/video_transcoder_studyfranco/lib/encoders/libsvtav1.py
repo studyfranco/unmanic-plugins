@@ -83,6 +83,10 @@ class LibsvtAv1Encoder:
             stream_encoding += ['-crf', str(default_crf)]
             return stream_encoding
 
+        if self.settings.get_setting('encoder_additional_params') in ['additional_params'] and self.settings.get_setting('encoder_svtav1_additional_params'):
+            # Add additional parameters for SVT-AV1
+            stream_encoding += ['-svtav1-params', self.settings.get_setting('encoder_svtav1_additional_params')]
+            
         # Add the preset and tune
         if self.settings.get_setting('preset'):
             stream_encoding += ['-preset', str(self.settings.get_setting('preset'))]
@@ -119,31 +123,31 @@ class LibsvtAv1Encoder:
             "select_options": [
                 {
                     "value": "12",
-                    "label": "Very fast - Fastest setting, biggest quality drop",
+                    "label": "Very fast (12) - Fastest setting, biggest quality drop",
                 },
                 {
                     "value": "10",
-                    "label": "Faster - Close to medium/fast quality, faster performance",
+                    "label": "Faster (10) - Close to medium/fast quality, faster performance",
                 },
                 {
                     "value": "8",
-                    "label": "Fast",
+                    "label": "Fast (8)",
                 },
                 {
                     "value": "6",
-                    "label": "Medium - Balanced performance and quality",
+                    "label": "Medium (6)",
                 },
                 {
                     "value": "4",
-                    "label": "Slow",
+                    "label": "Slow (4) - Balanced performance and quality",
                 },
                 {
                     "value": "2",
-                    "label": "Slower - Close to 'very slow' quality, faster performance",
+                    "label": "Slower (2) - Close to 'very slow' quality, faster performance",
                 },
                 {
                     "value": "1",
-                    "label": "Very Slow - Best quality",
+                    "label": "Very Slow (1) - Best quality",
                 },
             ],
         }
@@ -186,4 +190,35 @@ class LibsvtAv1Encoder:
             values["display"] = "hidden"
         if self.settings.get_setting('video_encoder') in ['libsvtav1']:
             values["description"] = "Default value for libsvtav1 = 23"
+        return values
+    
+    def get_encoder_svtav1_additional_params_form_settings(self):
+        values = {
+            "label":          "SVT-AV1: Additional Parameters",
+            "sub_setting":    True,
+            "input_type":     "select",
+            "select_options": [
+                {
+                    "value": "additional_params",
+                    "label": "SVT-AV1: Additional Parameters",
+                },
+            ]
+        }
+        self.__set_default_option(values['select_options'], 'encoder_additional_params', default_option='additional_params')
+        if self.settings.get_setting('mode') not in ['standard']:
+            values["display"] = "hidden"
+        return values
+    
+    def get_svtav1_additional_params_form_settings(self):
+        values = {
+            "label": "SVT-AV1: Additional Parameters field",
+            "description": "Additional SVT-AV1 parameters as a colon-separated string (e.g., enable-cdef=1:enable-restoration=1).",
+            "sub_setting": True,
+            "input_type": "textarea",
+        }
+        if self.settings.get_setting('mode') not in ['standard']:
+            values["display"] = "hidden"
+        if self.settings.get_setting('encoder_additional_params') not in ['additional_params']:
+            values["display"] = "hidden"
+        
         return values

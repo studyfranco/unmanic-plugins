@@ -86,11 +86,6 @@ class StreamMapper(object):
 
         # Set default Advanced options
         self.advanced_options = [
-            '-map', '0',
-            '-movflags', 'use_metadata_tags',
-            '-map_metadata', '0',
-            '-copy_unknown',
-            '-c', 'copy',  
             '-strict', '-2',
             '-max_muxing_queue_size', '4096',
         ]
@@ -493,7 +488,16 @@ class StreamMapper(object):
 
         # Add advanced options. This includes the stream mapping and the encoding args
         args += self.advanced_options
+        args += [
+            '-map', '0',
+            '-movflags', 'use_metadata_tags',
+            '-map_metadata', '0',
+            '-copy_unknown',
+            ]
         args += self.stream_mapping
+        args += [
+            '-c', 'copy',
+            ]
         args += self.stream_encoding
 
         # Add the output file
