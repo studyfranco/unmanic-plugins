@@ -41,11 +41,12 @@ class LibsvtAv1Encoder:
             "preset":                     "4",
             "encoder_ratecontrol_method": "CRF",
             "constant_quality_scale":     "23",
-            "tune":                        "1",
-            "overlays":                    0,
-            "variance_boost":              0,
-            "enable_qm":                   False,
-            "qm_min":                      "8",
+            "video_pix_fmt":              "auto",
+            "tune":                       1,
+            "overlays":                   0,
+            "variance_boost":             0,
+            "enable_qm":                  False,
+            "qm_min":                     "8",
             "encoder_additional_params":  "no_additional_params",
             "additional_params":           "",
         }
@@ -124,6 +125,11 @@ class LibsvtAv1Encoder:
             stream_encoding += [
                 '-crf', str(self.settings.get_setting('constant_quality_scale')),
             ]
+
+        if self.settings.get_setting('video_pix_fmt') not in ['auto']:
+            # Set the pixel format
+            stream_encoding += ['-pix_fmt', str(self.settings.get_setting('video_pix_fmt'))]
+
         stream_encoding += ["-dolbyvision" "1"]
 
         return stream_encoding
@@ -253,15 +259,15 @@ class LibsvtAv1Encoder:
             "input_type":     "select",
             "select_options": [
                 {
-                    "value": "0",
+                    "value": 0,
                     "label": "VQ (Recommended for animes, cartoons, and other animated content)",
                 },
                 {
-                    "value": "1",
+                    "value": 1,
                     "label": "PSNR (default)",
                 },
                 {
-                    "value": "2",
+                    "value": 2,
                     "label": "SSIM (Recommended for movies, TV shows, and other live-action content)",
                 },
             ]
