@@ -128,8 +128,6 @@ class LibsvtAv1Encoder:
             # Set the pixel format
             stream_encoding += ['-pix_fmt', str(self.settings.get_setting('video_pix_fmt'))]
 
-        stream_encoding += ["-dolbyvision","1"]
-
         return stream_encoding
 
     def __set_default_option(self, select_options, key, default_option=None):

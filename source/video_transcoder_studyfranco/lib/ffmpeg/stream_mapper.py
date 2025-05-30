@@ -24,6 +24,7 @@
 import os
 import shutil
 from logging import Logger
+from pymediainfo import MediaInfo
 
 from .probe import Probe
 
@@ -206,6 +207,8 @@ class StreamMapper(object):
                         if mapping:
                             found_streams_to_process = True
                             self.__apply_custom_stream_mapping(mapping)
+                            if has_dolby_vision(self.input_file):
+                                stream_encoding += ["-dolbyvision","1"]
                         else:
                             self.__copy_stream_mapping('v', self.video_stream_count)
                         self.video_stream_count += 1
@@ -510,3 +513,8 @@ class StreamMapper(object):
             args += ['-y', self.output_file]
 
         return args
+
+def has_dolby_vision(filepath):
+    mi = MediaInfo.parse(filepath)
+    return any("Dolby Vision" in track.hdr_format or (hasattr(track, "hdr_format_string") and "Dolby Vision" in track.hdr_format_string)
+               for track in mi.tracks if track.track_type == "Video")
