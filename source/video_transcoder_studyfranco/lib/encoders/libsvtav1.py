@@ -42,6 +42,7 @@ class LibsvtAv1Encoder:
             "encoder_ratecontrol_method": "CRF",
             "constant_quality_scale":     "23",
             "encoder_additional_params":  "no_additional_params",
+            "additional_params":           "",
         }
 
     def generate_default_args(self):
@@ -84,7 +85,7 @@ class LibsvtAv1Encoder:
             stream_encoding += ['-crf', str(default_crf)]
             return stream_encoding
 
-        if self.settings.get_setting('encoder_additional_params') in ['additional_params'] and self.settings.get_setting('encoder_svtav1_additional_params'):
+        if self.settings.get_setting('encoder_additional_params') in ['additional_params'] and len(self.settings.get_setting('encoder_svtav1_additional_params')):
             # Add additional parameters for SVT-AV1
             stream_encoding += ['-svtav1-params', self.settings.get_setting('encoder_svtav1_additional_params')]
             
@@ -214,7 +215,7 @@ class LibsvtAv1Encoder:
             values["display"] = "hidden"
         return values
     
-    def get_svtav1_additional_params_form_settings(self):
+    def get_additional_params_form_settings(self):
         values = {
             "label": "SVT-AV1: Additional Parameters field",
             "description": "Additional SVT-AV1 parameters as a colon-separated string (e.g., enable-cdef=1:enable-restoration=1).",
