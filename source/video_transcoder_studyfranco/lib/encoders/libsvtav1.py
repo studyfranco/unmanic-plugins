@@ -42,7 +42,7 @@ class LibsvtAv1Encoder:
             "encoder_ratecontrol_method": "CRF",
             "constant_quality_scale":     "23",
             "video_pix_fmt":              "auto",
-            "tune":                       1,
+            "tune_stvav1":                1,
             "overlays":                   0,
             "variance_boost":             0,
             "enable_qm":                  False,
@@ -93,9 +93,7 @@ class LibsvtAv1Encoder:
             return stream_encoding
         
         stav1_params = ["enable-stat-report=1"]
-        if self.settings.get_setting('tune'):
-            # Add the tune value
-            stav1_params += ['tune=' + str(self.settings.get_setting('tune'))]
+        stav1_params += ['tune=' + str(self.settings.get_setting('tune_stvav1'))]
         
         if self.settings.get_setting('overlays'):
             # Enable overlays
@@ -130,7 +128,7 @@ class LibsvtAv1Encoder:
             # Set the pixel format
             stream_encoding += ['-pix_fmt', str(self.settings.get_setting('video_pix_fmt'))]
 
-        stream_encoding += ["-dolbyvision" "1"]
+        stream_encoding += ["-dolbyvision","1"]
 
         return stream_encoding
 
@@ -231,6 +229,7 @@ class LibsvtAv1Encoder:
         values = {
             "label":          "Pixel Format",
             "description":    "Select the pixel format",
+            "sub_setting":    True,
             "input_type":     "select",
             "select_options": [
                 {
@@ -251,7 +250,7 @@ class LibsvtAv1Encoder:
             values["display"] = "hidden"
         return values
     
-    def get_tune_form_settings(self):
+    def get_tune_stvav1_form_settings(self):
         values = {
             "label":          "SVT-AV1: Tune",
             "description":    "VQ (Visual Quality), PSNR (Objective Quality), SSIM (Objective Quality).",
