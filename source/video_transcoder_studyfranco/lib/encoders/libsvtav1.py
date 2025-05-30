@@ -44,7 +44,7 @@ class LibsvtAv1Encoder:
             "tune":                        "1",
             "overlays":                    0,
             "variance_boost":              0,
-            "enable_qm":                   "0",
+            "enable_qm":                   False,
             "qm_min":                      "8",
             "encoder_additional_params":  "no_additional_params",
             "additional_params":           "",
@@ -104,7 +104,7 @@ class LibsvtAv1Encoder:
             # Enable variance boost
             stav1_params += ['enable-variance-boost=1']
             
-        if self.settings.get_setting('enable_qm') and self.settings.get_setting('enable_qm') in ['1']:
+        if self.settings.get_setting('enable_qm'):
             # Enable quantization matrix
             stav1_params += ['enable-qm=1']
             stav1_params += ['qm-min=' + str(self.settings.get_setting('qm_min'))]
@@ -309,7 +309,7 @@ class LibsvtAv1Encoder:
             values["display"] = "hidden"
         return values
     
-    def get_enable_qm_settings(self):
+    def get_enable_qm_form_settings(self):
         values = {
             "label":          "SVT-AV1: Enable Quantization Matrix (enable-qm)",
             "description":    "",
@@ -317,21 +317,21 @@ class LibsvtAv1Encoder:
             "input_type":     "select",
             "select_options": [
                 {
-                    "value": "0",
+                    "value": False,
                     "label": "No (Default)"
                 },
                 {
-                    "value": "1",
+                    "value": True,
                     "label": "Yes"
                 },
             ]
         }
-        self.__set_default_option(values['select_options'], 'enable_qm', default_option="0")
+        self.__set_default_option(values['select_options'], 'enable_qm', default_option=False)
         if self.settings.get_setting('mode') not in ['standard']:
             values["display"] = "hidden"
         return values
 
-    def get_qm_min_settings(self):
+    def get_qm_min_form_settings(self):
         values = {
             "label":          "SVT-AV1: Quantization Matrix Min (qm-min)",
             "description":    "Specifies qm-min level (Default: 8).",
