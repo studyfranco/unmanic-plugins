@@ -193,7 +193,7 @@ class LibsvtAv1Encoder:
             values["description"] = "Default value for libsvtav1 = 23"
         return values
     
-    def get_encoder_svtav1_additional_params_form_settings(self):
+    def get_encoder_additional_params_form_settings(self):
         values = {
             "label":          "SVT-AV1: Additional Parameters",
             "sub_setting":    True,
@@ -219,7 +219,7 @@ class LibsvtAv1Encoder:
             "label": "SVT-AV1: Additional Parameters field",
             "description": "Additional SVT-AV1 parameters as a colon-separated string (e.g., enable-cdef=1:enable-restoration=1).",
             "sub_setting": True,
-            "input_type": "textarea",
+            "input_type":  "textarea",
         }
         if self.settings.get_setting('mode') not in ['standard']:
             values["display"] = "hidden"
