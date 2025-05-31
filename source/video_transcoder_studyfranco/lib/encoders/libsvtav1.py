@@ -89,7 +89,6 @@ class LibsvtAv1Encoder:
             if self.settings.get_setting('video_encoder') in ['libsvtav1']:
                 default_crf = 23
             stream_encoding += ['-crf', str(default_crf)]
-            stream_encoding += ["-dolbyvision" "1"]
             return stream_encoding
         
         stav1_params = ["enable-stat-report=1"]
