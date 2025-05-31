@@ -517,7 +517,7 @@ class StreamMapper(object):
 def has_dolby_vision(filepath):
     try:
         mi = MediaInfo.parse(filepath)
-        return any(hasattr((track, "hdr_format") and "Dolby Vision" in track.hdr_format) or (hasattr(track, "hdr_format_string") and "Dolby Vision" in track.hdr_format_string)
+        return any((hasattr(track, "hdr_format") and track.hdr_format != None and "Dolby Vision" in track.hdr_format) or (hasattr(track, "hdr_format_string") and track.hdr_format_string != None and "Dolby Vision" in track.hdr_format_string)
                 for track in mi.tracks if track.track_type == "Video")
     except Exception as e:
         raise Exception(f"Error checking for Dolby Vision in {filepath}: {[track for track in mi.tracks if track.track_type == "Video"]}")
