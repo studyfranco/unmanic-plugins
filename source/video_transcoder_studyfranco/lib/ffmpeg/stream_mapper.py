@@ -208,7 +208,7 @@ class StreamMapper(object):
                             found_streams_to_process = True
                             self.__apply_custom_stream_mapping(mapping)
                             if has_dolby_vision(self.input_file):
-                                stream_encoding += ["-dolbyvision","1"]
+                                self.stream_encoding += ["-dolbyvision","1"]
                         else:
                             self.__copy_stream_mapping('v', self.video_stream_count)
                         self.video_stream_count += 1
