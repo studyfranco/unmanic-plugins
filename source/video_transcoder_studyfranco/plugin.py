@@ -17,6 +17,7 @@
 
 import logging
 import os
+import multiprocessing
 
 from video_transcoder_studyfranco.lib import plugin_stream_mapper
 from video_transcoder_studyfranco.lib.ffmpeg import Parser, Probe
@@ -307,3 +308,13 @@ def on_postprocessor_task_results(data):
             directory_info.set('video_transcoder', os.path.basename(original_source_path), 'force_transcoded')
             directory_info.save()
             logger.debug("Ignore on next scan written for '%s'.", original_source_path)
+            
+    launch_cmdExt_no_test(['ffmpeg', '-i', data.get('file_out'), '-i', data.get('file_in'), '-lavfi', f"libvmaf=log_path={data.get('file_out')}_vmaf.log:log_fmt=json:n_threads={multiprocessing.cpu_count()}", '-f', 'null', '-an', '-sn', '-dn' '-'])
+    data['vmaf_log'] = f"{data.get('file_out')}_vmaf.log"
+    
+def launch_cmdExt_no_test(cmd):
+    from subprocess import Popen, PIPE
+    cmdDownload = Popen(cmd, stdout=PIPE, stderr=PIPE)
+    stdout, stderror = cmdDownload.communicate()
+    exitCode = cmdDownload.returncode
+    return stdout, stderror, exitCode
