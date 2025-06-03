@@ -310,20 +310,12 @@ def on_postprocessor_task_results(data):
             logger.debug("Ignore on next scan written for '%s'.", original_source_path)
             
     try:
-        logger.error(f"Source: {data.get('source_data')}")
-    except Exception as e:
-        logger.error("Error accessing source data: %s", e)
-    try:
-        logger.error(f"Destination: {data.get('destination_files')}")
-    except Exception as e:
-        logger.error("Error accessing destination files: %s", e)
-    try:
         logger.error(f"Data {data}")
     except Exception as e:
         logger.error("Error accessing data: %s", e)
         
     try:
-        stdout, stderror, exitCode = launch_cmdExt_no_test(['ffmpeg', '-i', data.get('final_cache_path'), '-i', original_source_path, '-lavfi', f"libvmaf=log_path={data.get('final_cache_path')}_vmaf.log:log_fmt=json:n_threads={multiprocessing.cpu_count()}", '-f', 'null', '-an', '-sn', '-dn' '-'])
+        stdout, stderror, exitCode = launch_cmdExt_no_test(['ffmpeg', '-i', data.get('final_cache_path'), '-i', original_source_path, '-lavfi', f"libvmaf=log_path={data.get('final_cache_path')}_vmaf.log:log_fmt=json:n_threads={multiprocessing.cpu_count()}", '-f', 'null', '-an', '-sn', '-'])
         data['vmaf_log'] = f"{data.get('file_out')}_vmaf.log"
         if exitCode != 0:
             logger.error("VMAF calculation failed with exit code %s. Stdout: %s, Stderr: %s", exitCode, stdout, stderror)
