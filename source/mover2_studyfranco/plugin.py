@@ -23,6 +23,7 @@ import hashlib
 import json
 import logging
 import os
+import shutil
 from configparser import NoSectionError, NoOptionError
 
 from unmanic.libs.directoryinfo import UnmanicDirectoryInfo
@@ -335,7 +336,7 @@ def on_postprocessor_task_results(data):
         logger.error("Error accessing data: %s", e)
 
     try:
-        os.rename(data.get('final_cache_path')+"_vmaf.log", os.path.join(os.path.dirname(data.get('destination_files')[0]), os.path.basename(data.get('final_cache_path'))+"_vmaf.log"))
+        shutil.move(data.get('final_cache_path')+"_vmaf.log", os.path.join(os.path.dirname(data.get('destination_files')[0]), os.path.basename(data.get('final_cache_path'))+"_vmaf.log"))
     except Exception as e:
         logger.error("Failed to move VMAF log file: {}".format(e))
 
