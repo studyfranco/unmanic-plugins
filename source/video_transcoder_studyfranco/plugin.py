@@ -316,11 +316,11 @@ def on_postprocessor_task_results(data):
         
     try:
         stdout, stderror, exitCode = launch_cmdExt_no_test(['ffmpeg', '-i', data.get('final_cache_path'), '-i', original_source_path, '-lavfi', f"libvmaf=log_path={data.get('final_cache_path')}_vmaf.log:log_fmt=json:n_threads={multiprocessing.cpu_count()}", '-f', 'null', '-an', '-sn', '-'])
-        data['vmaf_log'] = f"{data.get('file_out')}_vmaf.log"
+        data['vmaf_log'] = f"{data.get('final_cache_path')}_vmaf.log"
         if exitCode != 0:
             logger.error("VMAF calculation failed with exit code %s. Stdout: %s, Stderr: %s", exitCode, stdout, stderror)
         else:
-            logger.info("VMAF calculation completed successfully for '%s'.", data['vmaf_log'])
+            logger.info("VMAF calculation completed successfully for '%s'.", data.get('final_cache_path'))
     except Exception as e:
         logger.error("Error during VMAF calculation: %s", e)
     
