@@ -309,8 +309,6 @@ def on_postprocessor_task_results(data):
             directory_info.save()
             logger.debug("Ignore on next scan written for '%s'.", original_source_path)
             
-    stdout, stderror, exitCode = launch_cmdExt_no_test(['ffmpeg', '-i', data.get('file_out'), '-i', data.get('file_in'), '-lavfi', f"libvmaf=log_path={data.get('file_out')}_vmaf.log:log_fmt=json:n_threads={multiprocessing.cpu_count()}", '-f', 'null', '-an', '-sn', '-dn' '-'])
-    data['vmaf_log'] = f"{data.get('file_out')}_vmaf.log"
     try:
         logger.error(f"Source: {data.get('source_data')}")
     except Exception as e:
@@ -323,10 +321,16 @@ def on_postprocessor_task_results(data):
         logger.error(f"Data {data}")
     except Exception as e:
         logger.error("Error accessing data: %s", e)
-    if exitCode != 0:
-        logger.error("VMAF calculation failed with exit code %s. Stdout: %s, Stderr: %s", exitCode, stdout, stderror)
-    else:
-        logger.info("VMAF calculation completed successfully for '%s'.", data['vmaf_log'])
+        
+    try:
+        stdout, stderror, exitCode = launch_cmdExt_no_test(['ffmpeg', '-i', data.get('file_out'), '-i', data.get('file_in'), '-lavfi', f"libvmaf=log_path={data.get('file_out')}_vmaf.log:log_fmt=json:n_threads={multiprocessing.cpu_count()}", '-f', 'null', '-an', '-sn', '-dn' '-'])
+        data['vmaf_log'] = f"{data.get('file_out')}_vmaf.log"
+        if exitCode != 0:
+            logger.error("VMAF calculation failed with exit code %s. Stdout: %s, Stderr: %s", exitCode, stdout, stderror)
+        else:
+            logger.info("VMAF calculation completed successfully for '%s'.", data['vmaf_log'])
+    except Exception as e:
+        logger.error("Error during VMAF calculation: %s", e)
     
 def launch_cmdExt_no_test(cmd):
     from subprocess import Popen, PIPE
