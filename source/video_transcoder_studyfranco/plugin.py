@@ -323,7 +323,7 @@ def on_postprocessor_task_results(data):
         logger.error("Error accessing data: %s", e)
         
     try:
-        stdout, stderror, exitCode = launch_cmdExt_no_test(['ffmpeg', '-i', data.get('file_out'), '-i', data.get('file_in'), '-lavfi', f"libvmaf=log_path={data.get('file_out')}_vmaf.log:log_fmt=json:n_threads={multiprocessing.cpu_count()}", '-f', 'null', '-an', '-sn', '-dn' '-'])
+        stdout, stderror, exitCode = launch_cmdExt_no_test(['ffmpeg', '-i', data.get('final_cache_path'), '-i', original_source_path, '-lavfi', f"libvmaf=log_path={data.get('final_cache_path')}_vmaf.log:log_fmt=json:n_threads={multiprocessing.cpu_count()}", '-f', 'null', '-an', '-sn', '-dn' '-'])
         data['vmaf_log'] = f"{data.get('file_out')}_vmaf.log"
         if exitCode != 0:
             logger.error("VMAF calculation failed with exit code %s. Stdout: %s, Stderr: %s", exitCode, stdout, stderror)
