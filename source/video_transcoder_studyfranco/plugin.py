@@ -233,6 +233,7 @@ def on_worker_process(data):
 
     # Get stream mapper
     mapper = plugin_stream_mapper.PluginStreamMapper()
+    mapper.set_output_file(data.get('file_out'))
     mapper.set_default_values(settings, abspath, probe)
 
     # Check if this file needs to be processed
