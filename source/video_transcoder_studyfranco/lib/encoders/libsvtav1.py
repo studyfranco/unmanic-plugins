@@ -21,7 +21,7 @@
         If not, see <https://www.gnu.org/licenses/>.
 
 """
-
+import os
 
 class LibsvtAv1Encoder:
 
@@ -91,7 +91,7 @@ class LibsvtAv1Encoder:
             stream_encoding += ['-crf', str(default_crf)]
             return stream_encoding
         
-        stav1_params = ["enable-stat-report=1", f"stat-file={output_file}.stat"]
+        stav1_params = ["enable-stat-report=1", f"stat-file={os.path.join(os.path.dirname(output_file),'stats.stat')}"]
         stav1_params += ['tune=' + str(self.settings.get_setting('tune_stvav1'))]
         
         if self.settings.get_setting('overlays'):
