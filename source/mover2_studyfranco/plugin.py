@@ -119,11 +119,6 @@ def get_file_out(settings, original_source_path, file_out, library_id=None):
 
     # Get just the file name from of the output file
     file_out_basename = os.path.basename(file_out)
-    
-    try:
-        os.rename(file_out+"_vmaf.log", os.path.join(destination_directory, file_out_basename+"_vmaf.log"))
-    except Exception as e:
-        logger.error("Failed to move VMAF log file: {}".format(e))
 
     # Return the output file
     return os.path.join(destination_directory, file_out_basename)
@@ -339,6 +334,11 @@ def on_postprocessor_task_results(data):
         shutil.move(data.get('final_cache_path')+"_vmaf.log", os.path.join(os.path.dirname(data.get('destination_files')[0]), os.path.basename(data.get('final_cache_path'))+"_vmaf.log"))
     except Exception as e:
         logger.error("Failed to move VMAF log file: {}".format(e))
+    
+    try:
+        shutil.move(data.get('final_cache_path')+".stat", os.path.join(os.path.dirname(data.get('destination_files')[0]), os.path.basename(data.get('final_cache_path'))+".stat"))
+    except Exception as e:
+        logger.error("Failed to move stat file: {}".format(e))
 
     # Clean up plugin's data file
     os.remove(plugin_data_file)

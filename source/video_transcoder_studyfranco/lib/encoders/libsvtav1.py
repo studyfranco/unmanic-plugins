@@ -75,7 +75,7 @@ class LibsvtAv1Encoder:
         provides = self.provides()
         return provides.get(encoder, {})
 
-    def args(self, stream_id):
+    def args(self, stream_id, output_file):
         stream_encoding = []
 
         # Use defaults for basic mode
@@ -91,7 +91,7 @@ class LibsvtAv1Encoder:
             stream_encoding += ['-crf', str(default_crf)]
             return stream_encoding
         
-        stav1_params = ["enable-stat-report=1"]
+        stav1_params = ["enable-stat-report=1", f"stat-file={output_file}.stat"]
         stav1_params += ['tune=' + str(self.settings.get_setting('tune_stvav1'))]
         
         if self.settings.get_setting('overlays'):

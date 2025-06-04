@@ -336,7 +336,7 @@ class PluginStreamMapper(StreamMapper):
                     self.set_ffmpeg_generic_options(**generic_kwargs)
                     stream_encoding += stream_encoding_args
                 elif self.settings.get_setting('video_encoder') in stva1_encoder.provides():
-                    stream_encoding += stva1_encoder.args(stream_id)
+                    stream_encoding += stva1_encoder.args(stream_id,self.output_file)
         elif codec_type in ['data']:
             if not self.settings.get_setting('apply_smart_filters'):
                 # If smart filters are not enabled, return 'False' to let the default mapping just copy the data stream
