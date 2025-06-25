@@ -20,6 +20,7 @@
 
 """
 import logging
+import os
 
 from unmanic.libs.directoryinfo import UnmanicDirectoryInfo
 from unmanic.libs.unplugins.settings import PluginSettings
@@ -70,6 +71,6 @@ def on_worker_process(data):
         activate_louis = "True"
     else:
         activate_louis = "False"
-    data['exec_command'] = ['python3', "/config/.unmanic/plugins/mkv_insert_studyfranco/lib/main.py", "-o", data.get('file_out'), "-s", data.get('original_file_path'), "-f", data.get('file_in'), "-l", activate_louis]
+    data['exec_command'] = ['python3', "/config/.unmanic/plugins/mkv_insert_studyfranco/lib/main.py", "-o", data.get('file_out'), "-s", data.get('original_file_path'), "-f", data.get('file_in'), "-l", activate_louis, "--pwd", "/config/.unmanic/plugins/mkv_insert_studyfranco", "--tmp", os.path.dirname(data.get('file_out'))]
 
     return data

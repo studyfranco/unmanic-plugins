@@ -38,6 +38,8 @@ if __name__ == '__main__':
                        required=True, help="File source")
     parser.add_argument("-o","--out", metavar='outfile', type=str, required=True, help="Output file")
     parser.add_argument("-l","--louis", metavar='louis', type=str, default="False", help="louis parametres")
+    parser.add_argument("--pwd", metavar='pwd', type=str,
+                        default=".", help="Path to the software, put it if you use the folder from another folder")
     parser.add_argument("--tmp", metavar='tmpdir', type=str,
                         default="/tmp", help="Folder where send temporar files")
     args = parser.parse_args()
