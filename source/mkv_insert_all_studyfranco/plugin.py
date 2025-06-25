@@ -38,7 +38,6 @@ class Settings(PluginSettings):
         self.form_settings = {
             "louis":           {
                 "label": "Louis parametres",
-                "input_type": "checkbox",
             },
         }
 
