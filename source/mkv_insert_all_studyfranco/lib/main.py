@@ -36,7 +36,7 @@ if __name__ == '__main__':
                        required=True, help="File processed")
     parser.add_argument("-s", "--source", metavar='source', type=str,
                        required=True, help="File source")
-    parser.add_argument("-o","--out", metavar='outfile', type=str, default=".", help="Output file")
+    parser.add_argument("-o","--out", metavar='outfile', type=str, required=True, help="Output file")
     parser.add_argument("-l","--louis", metavar='louis', type=str, default="False", help="louis parametres")
     parser.add_argument("--tmp", metavar='tmpdir', type=str,
                         default="/tmp", help="Folder where send temporar files")

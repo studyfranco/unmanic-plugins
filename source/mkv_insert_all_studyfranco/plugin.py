@@ -70,6 +70,6 @@ def on_worker_process(data):
         activate_louis = "True"
     else:
         activate_louis = "False"
-    data['exec_command'] = ['python', "-o", data.get('file_out'), "-s", data.get('original_file_path'), "-f", data.get('file_in'), "-l", activate_louis]
+    data['exec_command'] = ['python', "lib/main.py", "-o", data.get('file_out'), "-s", data.get('original_file_path'), "-f", data.get('file_in'), "-l", activate_louis]
 
     return data
