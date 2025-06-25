@@ -284,7 +284,7 @@ def merge_videos(file, source, out):
                        'merge_cmd' : [],
                        'metadata_cmd' : []}
     
-    source_video_metadata = video.video(source)
+    source_video_metadata = video.video(path.dirname(source),path.basename(source))
     source_video_metadata.get_mediadata()
     source_video_metadata.video = source_video_metadata.video
     source_video_metadata.calculate_md5_streams()
