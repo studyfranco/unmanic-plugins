@@ -66,6 +66,10 @@ def on_worker_process(data):
     
     settings = Settings(library_id=data.get('library_id'))
     # Apply ffmpeg args to command
-    data['exec_command'] = ['python', "-o", data.get('file_out'), "-s", data.get('original_file_path'), "-f", data.get('file_in'), "-l", settings.get_setting('louis')]
+    if settings.get_setting('louis'):
+        activate_louis = "True"
+    else:
+        activate_louis = "False"
+    data['exec_command'] = ['python', "-o", data.get('file_out'), "-s", data.get('original_file_path'), "-f", data.get('file_in'), "-l", activate_louis]
 
     return data

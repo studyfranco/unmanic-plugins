@@ -37,7 +37,7 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--source", metavar='source', type=str,
                        required=True, help="File source")
     parser.add_argument("-o","--out", metavar='outfile', type=str, default=".", help="Output file")
-    parser.add_argument("-l","--louis", metavar='louis', type=bool, default=False, help="louis parametres")
+    parser.add_argument("-l","--louis", metavar='louis', type=str, default="False", help="louis parametres")
     parser.add_argument("--tmp", metavar='tmpdir', type=str,
                         default="/tmp", help="Folder where send temporar files")
     args = parser.parse_args()
@@ -46,7 +46,9 @@ if __name__ == '__main__':
     tools.tmpFolder = path.join(args.tmp,"mkv_insert_"+str(datetime.now().strftime("%Y-%m-%d_%H:%M:%S")))
     
     try:
-        tools.louis = args.louis
+        if args.louis == "True":
+            tools.louis = True
+
         if (not tools.make_dirs(tools.tmpFolder)):
             raise Exception("Impossible to create the temporar dir")
 
