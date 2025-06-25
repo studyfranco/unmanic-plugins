@@ -1,0 +1,19 @@
+{
+    "author": "studyfranco",
+    "compatibility": [
+        1,
+        2
+    ],
+    "description": "MKV extract video from source",
+    "icon": "https://raw.githubusercontent.com/Unmanic/plugin.video_transcoder/master/icon.png",
+    "id": "mkv_extract_studyfranco",
+    "name": "MKV extract studyfranco",
+    "platform": [
+        "all"
+    ],
+    "priorities": {
+        "on_worker_process": 0
+    },
+    "tags": "pre-processor,mkv,extract,video",
+    "version": "0.0.1"
+}
