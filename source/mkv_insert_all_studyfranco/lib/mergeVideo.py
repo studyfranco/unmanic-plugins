@@ -176,7 +176,7 @@ def generate_merge_command_insert_ID_audio_track_to_remove_and_new_und_language(
     return number_track_audio
 
 def extract_stream(video_obj, type_stream, id_stream, out_file):
-    cmd_extract = [tools.software["mkvextract"], "-o", out_file]
+    cmd_extract = [tools.software["mkvmerge"], "-o", out_file]
     if type_stream == "audio":
         cmd_extract.extend(["-D","-S","--no-global-tags", "-M", "-B", "--no-chapters",
                             "--audio-tracks", f"{id_stream}"])
