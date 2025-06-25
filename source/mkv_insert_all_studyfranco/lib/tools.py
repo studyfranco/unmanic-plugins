@@ -1,8 +1,27 @@
-'''
-Created on 23 Apr 2022
+#!/usr/bin/env python3
+# -*- coding:utf-8 -*-
 
-@author: francois
-'''
+"""
+    plugins.global_settings.py
+
+    Written by:               Josh.5 <jsunnex@gmail.com>
+    Date:                     10 Jun 2022, (6:52 PM)
+
+    Copyright:
+        Copyright (C) 2021 Josh Sunnex
+
+        This program is free software: you can redistribute it and/or modify it under the terms of the GNU General
+        Public License as published by the Free Software Foundation, version 3.
+
+        This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+        implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+        for more details.
+
+        You should have received a copy of the GNU General Public License along with this program.
+        If not, see <https://www.gnu.org/licenses/>.
+
+"""
+
 import os
 import shutil
 import sys
