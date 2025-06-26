@@ -21,6 +21,8 @@
 """
 import logging
 import multiprocessing
+from os import path
+import shutil
 
 from unmanic.libs.directoryinfo import UnmanicDirectoryInfo
 from unmanic.libs.unplugins.settings import PluginSettings
@@ -56,6 +58,28 @@ def on_worker_process(data):
     data['file_out'] = data.get('file_in')
     
     # Apply ffmpeg args to command
-    data['exec_command'] = ['ffmpeg', '-i', data.get('file_in'), '-i', data.get('original_file_path'), '-lavfi', f"libvmaf=log_path={data.get('final_cache_path')}_vmaf.log:log_fmt=json:n_threads={multiprocessing.cpu_count()}", '-f', 'null', '-an', '-sn', '-']
+    data['exec_command'] = ['ffmpeg', '-i', data.get('file_in'), '-i', data.get('original_file_path'), '-lavfi', f"libvmaf=log_path={path.join(path.dirname(data.get('file_in')),path.basename(data.get('original_file_path')))}_vmaf.log:log_fmt=json:n_threads={multiprocessing.cpu_count()}", '-f', 'null', '-an', '-sn', '-']
 
     return data
+
+def on_postprocessor_task_results(data):
+    """
+    Runner function - provides a means for additional postprocessor functions based on the task success.
+
+    The 'data' object argument includes:
+        final_cache_path                - The path to the final cache file that was then used as the source for all destination files.
+        library_id                      - The library that the current task is associated with.
+        task_processing_success         - Boolean, did all task processes complete successfully.
+        file_move_processes_success     - Boolean, did all postprocessor movement tasks complete successfully.
+        destination_files               - List containing all file paths created by postprocessor file movements.
+        source_data                     - Dictionary containing data pertaining to the original source file.
+
+    :param data:
+    :return:
+
+    """
+    
+    try:
+        shutil.move(path.join(path.dirname(data.get('final_cache_path')),path.basename(data.get('source_data', {}).get('abspath')))+"_vmaf.log", path.join(path.dirname(data.get('destination_files')[0]), path.basename(data.get('source_data', {}).get('abspath'))+"_vmaf.log"))
+    except Exception as e:
+        logger.error("Failed to move VMAF log file: {}".format(e))
