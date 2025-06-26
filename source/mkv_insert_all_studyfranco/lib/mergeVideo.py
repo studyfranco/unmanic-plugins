@@ -215,17 +215,18 @@ def generate_new_file_audio_config(video_obj,base_cmd,audio,md5_audio_already_ad
                     pass
                 cmd_convert.extend(["-ac", str(audio['Channels'])])
         else:
-            if audio["Compression_Mode"] == "Lossless":
-                base_cmd.extend([f"-c:a", "flac", "-compression_level", "12"])
+            if "Compression_Mode" in audio and audio["Compression_Mode"] == "Lossless":
+                cmd_convert.extend([f"-c:a", "flac", "-compression_level", "12"])
                 if "BitDepth" in audio:
                     if audio["BitDepth"] == "16":
-                        base_cmd.extend(["-sample_fmt", "s16"])
+                        cmd_convert.extend(["-sample_fmt", "s16"])
                     else:
-                        base_cmd.extend(["-sample_fmt", "s32"])
+                        cmd_convert.extend(["-sample_fmt", "s32"])
                 
         tmp_file_convert = path.join(tools.tmpFolder,f"{video_obj.fileBaseName}_{audio['StreamOrder']}_tmp.mkv")
         cmd_convert.extend(["-t", duration_best_video, tmp_file_convert])
         ffmpeg_cmd_dict['convert_process'].append(video.ffmpeg_pool_audio_convert.apply_async(tools.launch_cmdExt, (cmd_convert,)))
+        sys.stderr.write(str(cmd_convert)+"\n")
         ffmpeg_cmd_dict['merge_cmd'].extend(["--no-global-tags", "-M", "-B", tmp_file_convert])
         return 1
 
@@ -258,6 +259,7 @@ def generate_new_file(video_obj,ffmpeg_cmd_dict,md5_audio_already_added,md5_sub_
                 tmp_file_convert = path.join(tools.tmpFolder,f"{video_obj.fileBaseName}_{sub['StreamOrder']}_tmp.mkv")
                 cmd_convert.extend(["-t", duration_best_video, tmp_file_convert])
                 ffmpeg_cmd_dict['convert_process'].append(video.ffmpeg_pool_audio_convert.apply_async(tools.launch_cmdExt, (cmd_convert,)))
+                sys.stderr.write(str(cmd_convert)+"\n")
                 ffmpeg_cmd_dict['merge_cmd'].extend(["--no-global-tags", "-M", "-B", tmp_file_convert])
     
     for language,audios in video_obj.audios.items():
@@ -317,7 +319,7 @@ def merge_videos(file, source, out):
             if (not only_UID_warning):
                 raise e
             else:
-                sys.stderr.write(str(e))
+                sys.stderr.write(str(e)+"\n")
         else:
             raise e
 
