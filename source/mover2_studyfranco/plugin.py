@@ -329,11 +329,6 @@ def on_postprocessor_task_results(data):
         logger.error(f"Data {data}")
     except Exception as e:
         logger.error("Error accessing data: %s", e)
-
-    try:
-        shutil.move(data.get('final_cache_path')+"_vmaf.log", os.path.join(os.path.dirname(data.get('destination_files')[0]), os.path.basename(data.get('final_cache_path'))+"_vmaf.log"))
-    except Exception as e:
-        logger.error("Failed to move VMAF log file: {}".format(e))
     
     try:
         shutil.move(os.path.join(os.path.dirname(data.get('final_cache_path')),'stats.stat'), os.path.join(os.path.dirname(data.get('destination_files')[0]), os.path.basename(data.get('final_cache_path'))+".stat"))
