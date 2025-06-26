@@ -23,6 +23,7 @@ import logging
 import multiprocessing
 from os import path
 import shutil
+import json
 
 from unmanic.libs.directoryinfo import UnmanicDirectoryInfo
 from unmanic.libs.unplugins.settings import PluginSettings
@@ -78,8 +79,10 @@ def on_postprocessor_task_results(data):
     :return:
 
     """
-    
     try:
-        shutil.move(path.join(path.dirname(data.get('final_cache_path')),path.basename(data.get('source_data', {}).get('abspath')))+"_vmaf.log", path.join(path.dirname(data.get('destination_files')[0]), path.basename(data.get('source_data', {}).get('abspath'))+"_vmaf.log"))
+        with open(path.join(path.dirname(data.get('final_cache_path')),path.basename(data.get('source_data', {}).get('abspath')))+"_vmaf.log") as f:
+            vmaf = json.load(f)
+        
+        shutil.move(path.join(path.dirname(data.get('final_cache_path')),path.basename(data.get('source_data', {}).get('abspath')))+"_vmaf.log", path.join(path.dirname(data.get('destination_files')[0]), path.basename(data.get('source_data', {}).get('abspath'))+f"_vmaf__{vmaf['pooled_metrics']['vmaf']['mean']}__.log"))
     except Exception as e:
         logger.error("Failed to move VMAF log file: {}".format(e))
