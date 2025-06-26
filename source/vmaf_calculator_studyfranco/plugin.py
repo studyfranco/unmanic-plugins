@@ -20,6 +20,7 @@
 
 """
 import logging
+import multiprocessing
 
 from unmanic.libs.directoryinfo import UnmanicDirectoryInfo
 from unmanic.libs.unplugins.settings import PluginSettings
@@ -52,8 +53,9 @@ def on_worker_process(data):
     # Default to no FFMPEG command required. This prevents the FFMPEG command from running if it is not required
     data['exec_command'] = []
     data['repeat'] = False
+    data['file_out'] = data.get('file_in')
     
     # Apply ffmpeg args to command
-    data['exec_command'] = ['mkvmerge', "-o", data.get('file_out'), "-A", "-S", "-M", "-B", "--no-chapters", "--no-attachments", "--no-global-tags", data.get('original_file_path')]
+    data['exec_command'] = ['ffmpeg', '-i', data.get('file_in'), '-i', data.get('original_file_path'), '-lavfi', f"libvmaf=log_path={data.get('final_cache_path')}_vmaf.log:log_fmt=json:n_threads={multiprocessing.cpu_count()}", '-f', 'null', '-an', '-sn', '-']
 
     return data

@@ -289,6 +289,11 @@ def merge_videos(file, source, out):
     source_video_metadata.video = source_video_metadata.video
     source_video_metadata.calculate_md5_streams()
     
+    if 'Language' in source_video_metadata.video and source_video_metadata.video['Language'] != "und":
+        language = source_video_metadata.video['Language'].split("-")[0]
+        tools.special_params["original_language"] = language
+        
+    
     generate_new_file(source_video_metadata,ffmpeg_cmd_dict,md5_audio_already_added,md5_sub_already_added,source_video_metadata.video['Duration'])
     
     out_path_tmp_file_name_split = path.join(tools.tmpFolder,f"{source_video_metadata.fileBaseName}_merged_split.mkv")
