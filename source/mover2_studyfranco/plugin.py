@@ -253,11 +253,14 @@ def on_postprocessor_file_movement(data):
             logger.error("Original source path could not be found.")
             return data
 
-        # Mark the source file to be ignored on subsequent scans
-        directory_info = UnmanicDirectoryInfo(os.path.dirname(original_source_path))
-        directory_info.set('mover2', os.path.basename(original_source_path), 'Ignoring')
-        directory_info.save()
-        logger.debug("Ignore on next scan written for '{}'.".format(original_source_path))
+        try:
+            # Mark the source file to be ignored on subsequent scans
+            directory_info = UnmanicDirectoryInfo(os.path.dirname(original_source_path))
+            directory_info.set('mover2', os.path.basename(original_source_path), 'Ignoring')
+            directory_info.save()
+            logger.debug("Ignore on next scan written for '{}'.".format(original_source_path))
+        except:
+            pass
 
     return data
 
