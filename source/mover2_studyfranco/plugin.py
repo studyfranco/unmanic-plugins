@@ -144,42 +144,6 @@ def file_marked_as_moved(path):
     return False
 
 
-def on_library_management_file_test(data):
-    """
-    Runner function - enables additional actions during the library management file tests.
-
-    The 'data' object argument includes:
-        path                            - String containing the full path to the file being tested.
-        issues                          - List of currently found issues for not processing the file.
-        add_file_to_pending_tasks       - Boolean, is the file currently marked to be added to the queue for processing.
-
-    :param data:
-    :return:
-
-    """
-    # Get the path to the file
-    abspath = data.get('path')
-    basename = os.path.basename(abspath)
-
-    # Configure settings object (maintain compatibility with v1 plugins)
-    if data.get('library_id'):
-        settings = Settings(library_id=data.get('library_id'))
-    else:
-        settings = Settings()
-
-    if file_marked_as_moved(abspath):
-        # Ensure this file is not added to the pending tasks
-        data['add_file_to_pending_tasks'] = False
-        logger.debug("File '{}' has been previously marked as moved.".format(abspath))
-    elif settings.get_setting('force_processing_all_files') and basename != '.unmanic':
-        # (Never move the .unmanic file)
-        # Ensure this file is added to the pending tasks regardless of status of any subsequent tests
-        data['add_file_to_pending_tasks'] = True
-        logger.debug("Forcing file '{}' to be added to task list.".format(abspath))
-
-    return data
-
-
 def on_postprocessor_file_movement(data):
     """
     Runner function - configures additional postprocessor file movements during the postprocessor stage of a task.
@@ -252,15 +216,6 @@ def on_postprocessor_file_movement(data):
         if not os.path.exists(original_source_path):
             logger.error("Original source path could not be found.")
             return data
-
-        try:
-            # Mark the source file to be ignored on subsequent scans
-            directory_info = UnmanicDirectoryInfo(os.path.dirname(original_source_path))
-            directory_info.set('mover2', os.path.basename(original_source_path), 'Ignoring')
-            directory_info.save()
-            logger.debug("Ignore on next scan written for '{}'.".format(original_source_path))
-        except:
-            pass
 
     return data
 
