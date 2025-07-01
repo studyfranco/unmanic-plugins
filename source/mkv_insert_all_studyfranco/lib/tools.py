@@ -129,6 +129,6 @@ default_language_for_undetermine = 'und'
 dev = False
 special_params = {"change_all_und": False, "original_language":""}
 mergeRules = None
-sub_type_not_encodable = set(["hdmv_pgs_subtitle","dvd_subtitle"])
+sub_type_not_encodable = set(["hdmv_pgs_subtitle","dvd_subtitle","s_hdmv/pgs","pgs"])
 sub_type_near_srt = set(["srt","utf-8","utf-16","utf-16le","utf-16be","utf-32","utf-32le","utf-32be","vtt","webvtt","subrip"])
 louis = False
