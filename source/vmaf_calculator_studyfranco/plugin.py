@@ -35,6 +35,13 @@ logger = logging.getLogger("Unmanic.Plugin.vmaf_calculator_studyfranco")
 class Settings(PluginSettings):
     settings = {}
 
+def launch_cmdExt_no_test(cmd):
+    from subprocess import Popen, PIPE
+    cmdDownload = Popen(cmd, stdout=PIPE, stderr=PIPE)
+    stdout, stderror = cmdDownload.communicate()
+    exitCode = cmdDownload.returncode
+    return stdout, stderror, exitCode
+
 def on_worker_process(data):
     """
     Runner function - enables additional configured processing jobs during the worker stages of a task.
@@ -58,8 +65,12 @@ def on_worker_process(data):
     data['repeat'] = False
     data['file_out'] = data.get('file_in')
     
+    stdout, stderror, exitCode = launch_cmdExt_no_test(['mkvmerge', "-o", path.join(path.dirname(data.get('file_out')),'source.mkv'), "-A", "-S", "-M", "-B", "--no-chapters", "--no-attachments", "--no-global-tags", data.get('original_file_path')])
+    
+    stdout, stderror, exitCode = launch_cmdExt_no_test(['mkvmerge', "-o", path.join(path.dirname(data.get('file_out')),'converted.mkv'), "-A", "-S", "-M", "-B", "--no-chapters", "--no-attachments", "--no-global-tags", data.get('file_in')])
+    
     # Apply ffmpeg args to command
-    data['exec_command'] = ['ffmpeg', '-i', data.get('file_in'), '-i', data.get('original_file_path'), '-map', '0:v:0', '-map', '1:v:0', '-lavfi', f"libvmaf=log_path='{path.join(path.dirname(data.get('file_in')),path.basename(data.get('original_file_path')))}_vmaf.log':log_fmt=json:n_threads={multiprocessing.cpu_count()}", '-f', 'null', '-an', '-sn', '-']
+    data['exec_command'] = ['ffmpeg', '-i', path.join(path.dirname(data.get('file_out')),'converted.mkv'), '-i', path.join(path.dirname(data.get('file_out')),'source.mkv'), '-lavfi', f"libvmaf=log_path='{path.join(path.dirname(data.get('file_in')),path.basename(data.get('original_file_path')))}_vmaf.log':log_fmt=json:n_threads={multiprocessing.cpu_count()}", '-f', 'null', '-an', '-sn', '-']
 
     return data
 
