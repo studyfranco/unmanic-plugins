@@ -59,7 +59,7 @@ def on_worker_process(data):
     data['file_out'] = data.get('file_in')
     
     # Apply ffmpeg args to command
-    data['exec_command'] = ['ffmpeg', '-i', data.get('file_in'), '-i', data.get('original_file_path'), '-lavfi', f"libvmaf=log_path='{path.join(path.dirname(data.get('file_in')),path.basename(data.get('original_file_path')))}_vmaf.log':log_fmt=json:n_threads={multiprocessing.cpu_count()}", '-f', 'null', '-an', '-sn', '-']
+    data['exec_command'] = ['ffmpeg', '-i', data.get('file_in'), '-i', data.get('original_file_path'), '-map', '0:v', '-map', '1:v', '-lavfi', f"libvmaf=log_path='{path.join(path.dirname(data.get('file_in')),path.basename(data.get('original_file_path')))}_vmaf.log':log_fmt=json:n_threads={multiprocessing.cpu_count()}", '-f', 'null', '-an', '-sn', '-']
 
     return data
 
