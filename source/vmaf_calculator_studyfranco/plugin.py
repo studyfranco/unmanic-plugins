@@ -70,7 +70,7 @@ def on_worker_process(data):
     stdout, stderror, exitCode = launch_cmdExt_no_test(['mkvmerge', "-o", path.join(path.dirname(data.get('file_out')),'converted.mkv'), "-A", "-S", "-M", "-B", "--no-chapters", "--no-attachments", "--no-global-tags", data.get('file_in')])
     
     # Apply ffmpeg args to command
-    data['exec_command'] = ['ffmpeg', '-i', path.join(path.dirname(data.get('file_out')),'converted.mkv'), '-i', path.join(path.dirname(data.get('file_out')),'source.mkv'), '-lavfi', f"libvmaf=log_path='{path.join(path.dirname(data.get('file_in')),path.basename(data.get('original_file_path')))}_vmaf.log':log_fmt=json:n_threads={multiprocessing.cpu_count()}", '-f', 'null', '-an', '-sn', '-']
+    data['exec_command'] = ['ffmpeg', '-loglevel', 'error', '-i', path.join(path.dirname(data.get('file_out')),'converted.mkv'), '-i', path.join(path.dirname(data.get('file_out')),'source.mkv'), '-lavfi', f"libvmaf=log_path='{path.join(path.dirname(data.get('file_in')),path.basename(data.get('original_file_path')))}_vmaf.log':log_fmt=json:n_threads={multiprocessing.cpu_count()}", '-f', 'null', '-an', '-sn', '-']
 
     return data
 
