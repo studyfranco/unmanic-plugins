@@ -224,7 +224,7 @@ def generate_new_file_audio_config(video_obj,base_cmd,audio,md5_audio_already_ad
                         cmd_convert.extend(["-sample_fmt", "s32"])
                 else:
                     cmd_convert.extend(["-sample_fmt", "s32"])
-                cmd_convert.extend(["-exact_rice_parameters", "1", "-multi_dim_quant", "1"])
+                cmd_convert.extend(["-exact_rice_parameters", "1"])
         tmp_file_convert = path.join(tools.tmpFolder,f"{video_obj.fileBaseName}_{audio['StreamOrder']}_tmp.mkv")
         cmd_convert.extend(["-t", duration_best_video, tmp_file_convert])
         ffmpeg_cmd_dict['convert_process'].append(video.ffmpeg_pool_audio_convert.apply_async(tools.launch_cmdExt, (cmd_convert,)))
