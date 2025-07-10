@@ -1,0 +1,19 @@
+{
+    "author": "studyfranco",
+    "compatibility": [
+        1,
+        2
+    ],
+    "description": "VMAF calculator for Unmanic",
+    "icon": "https://raw.githubusercontent.com/Unmanic/plugin.video_transcoder/master/icon.png",
+    "id": "vmaf_calculator_studyfranco",
+    "name": "VMAF Calculator",
+    "platform": [
+        "all"
+    ],
+    "priorities": {
+        "on_worker_process": 3
+    },
+    "tags": "post-processor,mkv,extract,video",
+    "version": "0.0.1"
+}
