@@ -79,7 +79,8 @@ class StreamMapper(object):
         # Set default Generic options
         self.generic_options = [
             '-hide_banner',
-            '-loglevel', 'info',
+            '-loglevel', 'error',
+            '-stats',
         ]
 
         # Set default Main options
