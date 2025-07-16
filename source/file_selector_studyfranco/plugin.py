@@ -167,7 +167,7 @@ def on_postprocessor_task_results(data):
         
         # Get the source file path
         source_path = data.get('source_data', {}).get('abspath')
-        if source_path:
+        if source_path != None and source_path != "":
             try:
                 with setup_database(settings.get_setting('database_url')) as db_session:
                     # Add the processed file to the database
