@@ -47,19 +47,19 @@ class Settings(PluginSettings):
         super(Settings, self).__init__(*args, **kwargs)
         self.form_settings = {
             "name_patterns": {
-                "description": "Motifs de nom de fichier (regex séparés par des virgules)",
+                "label": "Motifs de nom de fichier (regex séparés par des virgules)",
                 "input_type": "textarea",
             },
             "exclude_patterns": {
-                "description": "Motifs à exclure (regex séparés par des virgules)",
+                "label": "Motifs à exclure (regex séparés par des virgules)",
                 "input_type": "textarea",
             },
             "database_url": {
-                "description": "URL de la base de données (sqlite:///path/to/db.sqlite ou postgresql://user:pass@host/dbname)",
+                "label": "URL de la base de données (sqlite:///path/to/db.sqlite ou postgresql://user:pass@host/dbname)",
                 "input_type": "textarea",
             },
             "case_sensitive": {
-                "description": "Recherche sensible à la casse",
+                "label": "Recherche sensible à la casse",
                 "input_type": "checkbox",
             }
         }
