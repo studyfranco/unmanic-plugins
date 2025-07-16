@@ -111,18 +111,20 @@ def on_library_management_file_test(data):
     flags = 0 if settings.get_setting('case_sensitive') else IGNORECASE
     
     for regex in settings.get_setting('name_patterns').split(','):
-        if compile(regex,flags=flags).match(basename):
-            file_to_include = True
-            logger.debug("File '{}' matches name pattern '{}'.".format(abspath, regex))
-            break
+        if len(regex):
+            if compile(regex,flags=flags).match(basename):
+                file_to_include = True
+                logger.debug("File '{}' matches name pattern '{}'.".format(abspath, regex))
+                break
     
     if file_to_include:
         for regex in settings.get_setting('exclude_patterns').split(','):
-            if compile(regex,flags=flags).match(basename):
-                data['add_file_to_pending_tasks'] = False
-                data['issues'].append("File '{}' matches exclude pattern '{}'.".format(abspath, regex))
-                logger.debug("File '{}' matches exclude pattern '{}'.".format(abspath, regex))
-                return data
+            if len(regex):
+                if compile(regex,flags=flags).match(basename):
+                    data['add_file_to_pending_tasks'] = False
+                    data['issues'].append("File '{}' matches exclude pattern '{}'.".format(abspath, regex))
+                    logger.debug("File '{}' matches exclude pattern '{}'.".format(abspath, regex))
+                    return data
     else:
         data['add_file_to_pending_tasks'] = False
         data['issues'].append("File '{}' does not match any include patterns.".format(abspath))
