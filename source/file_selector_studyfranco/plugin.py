@@ -60,7 +60,6 @@ class Settings(PluginSettings):
             },
             "case_sensitive": {
                 "label": "Recherche sensible à la casse",
-                "input_type": "checkbox",
             }
         }
 

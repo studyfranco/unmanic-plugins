@@ -3,7 +3,7 @@
     "compatibility": [
         2
     ],
-    "description": "Files Slector for Unmanic",
+    "description": "Files Selector for Unmanic",
     "icon": "https://raw.githubusercontent.com/Unmanic/plugin.video_transcoder/master/icon.png",
     "id": "files_selector_studyfranco",
     "name": "Files Selector",
