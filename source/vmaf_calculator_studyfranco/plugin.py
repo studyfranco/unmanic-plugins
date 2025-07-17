@@ -90,10 +90,13 @@ def on_postprocessor_task_results(data):
     :return:
 
     """
-    try:
-        with open(path.join(path.dirname(data.get('final_cache_path')),path.basename(data.get('source_data', {}).get('abspath')))+"_vmaf.log") as f:
-            vmaf = json.load(f)
-        
-        shutil.move(path.join(path.dirname(data.get('final_cache_path')),path.basename(data.get('source_data', {}).get('abspath')))+"_vmaf.log", path.join(path.dirname(data.get('destination_files')[0]), path.basename(data.get('source_data', {}).get('abspath'))+f"_vmaf__{vmaf['pooled_metrics']['vmaf']['mean']}__.log"))
-    except Exception as e:
-        logger.error("Failed to move VMAF log file: {}".format(e))
+    if data.get('task_processing_success') and data.get('file_move_processes_success'):
+        try:
+            with open(path.join(path.dirname(data.get('final_cache_path')),path.basename(data.get('source_data', {}).get('abspath')))+"_vmaf.log") as f:
+                vmaf = json.load(f)
+            
+            shutil.move(path.join(path.dirname(data.get('final_cache_path')),path.basename(data.get('source_data', {}).get('abspath')))+"_vmaf.log", path.join(path.dirname(data.get('destination_files')[0]), path.basename(data.get('source_data', {}).get('abspath'))+f"_vmaf__{vmaf['pooled_metrics']['vmaf']['mean']}__.log"))
+        except Exception as e:
+            logger.error("Failed to move VMAF log file: {}".format(e))
+            
+    return data

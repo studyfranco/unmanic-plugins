@@ -1,7 +1,6 @@
 {
     "author": "studyfranco",
     "compatibility": [
-        1,
         2
     ],
     "description": "VMAF calculator for Unmanic",
@@ -15,5 +14,5 @@
         "on_worker_process": 3
     },
     "tags": "post-processor,mkv,extract,video",
-    "version": "0.0.1"
+    "version": "0.0.2"
 }

@@ -111,11 +111,10 @@ def on_library_management_file_test(data):
     flags = 0 if settings.get_setting('case_sensitive') else IGNORECASE
     
     for regex in settings.get_setting('name_patterns').split(','):
-        if len(regex):
+        if len(regex) and (not file_to_include):
             if compile(regex,flags=flags).match(basename):
                 file_to_include = True
                 logger.debug("File '{}' matches name pattern '{}'.".format(abspath, regex))
-                break
     
     if file_to_include:
         for regex in settings.get_setting('exclude_patterns').split(','):

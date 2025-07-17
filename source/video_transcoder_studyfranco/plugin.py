@@ -314,3 +314,5 @@ def on_postprocessor_task_results(data):
         logger.error(f"Data {data}")
     except Exception as e:
         logger.error("Error accessing data: %s", e)
+        
+    return data
