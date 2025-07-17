@@ -253,7 +253,7 @@ def generate_new_file(video_obj,ffmpeg_cmd_dict,md5_audio_already_added,md5_sub_
                     md5_sub_already_added.add(sub['MD5'])
                 codec = sub["Format"].lower()
                 if codec in tools.sub_type_not_encodable:
-                    pass
+                    cmd_convert.extend(["-copyts", "-avoid_negative_ts", "disabled"])
                 elif codec in tools.sub_type_near_srt:
                     cmd_convert.extend(["-c:s", "srt"])
                 else:
