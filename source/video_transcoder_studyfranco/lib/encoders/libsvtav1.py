@@ -93,6 +93,10 @@ class LibsvtAv1Encoder:
         
         stav1_params = ["enable-stat-report=1", f"stat-file={os.path.join(os.path.dirname(output_file),'stats.stat')}"]
         stav1_params += ['tune=' + str(self.settings.get_setting('tune_stvav1'))]
+
+        if self.settings.get_setting('encoder_ratecontrol_method') in ['CRF']:
+            # Set values for constant quantizer scale
+            stav1_params += ['max-qp=' + str(self.settings.get_setting('constant_quality_scale'))]
         
         if self.settings.get_setting('overlays'):
             # Enable overlays
