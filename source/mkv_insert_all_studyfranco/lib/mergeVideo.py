@@ -175,6 +175,35 @@ def generate_merge_command_insert_ID_audio_track_to_remove_and_new_und_language(
     
     return number_track_audio
 
+def set_keep_language(video_obj):
+    """
+    Set the keep language for the video object
+    :param video_obj: video object to set the keep language
+    :return:
+    """
+    
+    if len(video_obj.keys-tools.language_to_keep):
+        for language,audios in video_obj.audios.items():
+            if language not in tools.language_to_keep:
+                for audio in audios:
+                    audio['keep'] = False
+                
+    for language,audios in video_obj.commentary.items():
+        if language not in tools.language_to_keep:
+            for audio in audios:
+                audio['keep'] = False
+                
+    for language,audios in video_obj.audiodesc.items():
+        if language not in tools.language_to_keep:
+            for audio in audios:
+                audio['keep'] = False
+    
+    if tools.remove_sub_language_not_keep:
+        for language,subs in video_obj.subtitles.items():
+            if language not in tools.language_to_keep:
+                for sub in subs:
+                    sub['keep'] = False
+
 def extract_stream(video_obj, type_stream, id_stream, out_file):
     cmd_extract = [tools.software["mkvmerge"], "-o", out_file]
     if type_stream == "audio":
@@ -298,7 +327,7 @@ def merge_videos(file, source, out):
     if 'Language' in source_video_metadata.video and source_video_metadata.video['Language'] != "und":
         language = source_video_metadata.video['Language'].split("-")[0]
         tools.special_params["original_language"] = language
-        
+        tools.language_to_keep.add(language)
     
     generate_new_file(source_video_metadata,ffmpeg_cmd_dict,md5_audio_already_added,md5_sub_already_added,source_video_metadata.video['Duration'])
     
@@ -335,6 +364,9 @@ def merge_videos(file, source, out):
     out_video_metadata.get_mediadata()
     out_video_metadata.video = source_video_metadata.video
     out_video_metadata.calculate_md5_streams_split()
+    
+    if tools.keep_only_language:
+        set_keep_language(out_video_metadata)
     
     final_insert = [tools.software["mkvmerge"], "-o", out]
     final_insert.extend(["-A", "-S", "--no-chapters", "-M", "-B", "--no-global-tags", file])

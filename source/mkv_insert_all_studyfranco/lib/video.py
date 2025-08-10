@@ -24,11 +24,13 @@
 
 from os import path,remove
 from sys import stderr
-from threading import RLock
-from time import strftime,gmtime,sleep
+from threading import RLock,Thread
+from time import strftime,gmtime,sleep,time
+import hashlib
 import tools
 import re
 import json
+from iso639 import Lang,is_language
 
 ffmpeg_pool_audio_convert = None
 ffmpeg_pool_big_job = None
@@ -69,11 +71,11 @@ class video():
         self.sameAudioMD5UseForCalculation = []
     
     def get_mediadata(self):
-        stdout, stderror, exitCode = tools.launch_cmdExt([tools.software["mediainfo"], "--Output=JSON", self.filePath])
+        stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload([tools.software["mediainfo"], "--Output=JSON", self.filePath], 5, 90)
         if exitCode != 0:
             raise Exception("Error with {} during the mediadata: {}".format(self.filePath,stderror.decode("UTF-8")))
         self.mediadata = json.loads(stdout.decode("UTF-8"))
-        stdout, stderror, exitCode = tools.launch_cmdExt([tools.software["mkvmerge"],"-i", "-F", "json", self.filePath])
+        stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload([tools.software["mkvmerge"],"-i", "-F", "json", self.filePath], 5, 90)
         if exitCode != 0:
             raise Exception("Error with {} during the mkvmerge metadata: {}".format(self.filePath,stderror.decode("UTF-8")))
         self.mkvmergedata = json.loads(stdout.decode("UTF-8"))
@@ -101,30 +103,43 @@ class video():
                     raise Exception(f"Multiple video in the same file {self.filePath}, I can't compare and merge they")
                 else:
                     self.video = data
-            elif data['@type'] == 'Audio': 
+            else:
                 if 'Language' in data:
-                    language = data['Language'].split("-")[0]
+                    if is_language(data['Language']):
+                        language_iso_1 = Lang(data['Language']).pt1
+                        if language_iso_1 != None and language_iso_1 != '':
+                            language = language_iso_1
+                        else:
+                            try:
+                                language_iso_1 = Lang(data['Language']).macro().pt1
+                                if language_iso_1 != None and language_iso_1 != '':
+                                    language = language_iso_1
+                                else:
+                                    language = data['Language'].split("-")[0]
+                            except:
+                                language = data['Language'].split("-")[0]
+                    else:
+                        language = data['Language'].split("-")[0]
                 else:
                     language = "und"
-                if ('Title' in data and 'commentary' in data['Title'].lower()) or ("flag_commentary" in data['properties'] and data['properties']["flag_commentary"]):
-                    if language in self.commentary:
-                        self.commentary[language].append(data)
+                if data['@type'] == 'Audio': 
+                    if ('Title' in data and 'commentary' in data['Title'].lower()) or ("flag_commentary" in data['properties'] and data['properties']["flag_commentary"]):
+                        if language in self.commentary:
+                            self.commentary[language].append(data)
+                        else:
+                            self.commentary[language] = [data]
+                    elif ('Title' in data and ( re.match(r".* *\[{0,1}audio {0,1}description\]{0,1} *.*", data["Title"].lower()) or re.match(r".* *\[{0,1}audio {0,1}guide\]{0,1} *.*", data["Title"].lower()) ) ) or ("flag_visual_impaired" in data['properties'] and data['properties']["flag_visual_impaired"]):
+                        if language in self.audiodesc:
+                            self.audiodesc[language].append(data)
+                        else:
+                            self.audiodesc[language] = [data]
                     else:
-                        self.commentary[language] = [data]
-                elif ('Title' in data and re.match(r".* *\[{0,1}audio {0,1}description\]{0,1} *.*", data["Title"].lower()) ) or ("flag_visual_impaired" in data['properties'] and data['properties']["flag_visual_impaired"]):
-                    if language in self.audiodesc:
-                        self.audiodesc[language].append(data)
-                    else:
-                        self.audiodesc[language] = [data]
-                else:
-                    data["compatible"] = True
-                    if language in self.audios:
-                        self.audios[language].append(data)
-                    else:
-                        self.audios[language] = [data]
-            elif data['@type'] == 'Text':
-                if 'Language' in data:
-                    language = data['Language'].split("-")[0]
+                        data["compatible"] = True
+                        if language in self.audios:
+                            self.audios[language].append(data)
+                        else:
+                            self.audios[language] = [data]
+                elif data['@type'] == 'Text':
                     if language in self.subtitles:
                         self.subtitles[language].append(data)
                     else:
@@ -198,7 +213,7 @@ class video():
                         nameFilesExtractCut.append(nameOutFile)
                         cmd = baseCommand.copy()
                         cmd.extend(["-map", "0:"+str(audio['StreamOrder']), nameOutFile])
-                        self.ffmpeg_progress_audio.append(ffmpeg_pool_audio_convert.apply_async(tools.launch_cmdExt, (cmd,)))
+                        self.ffmpeg_progress_audio.append(ffmpeg_pool_audio_convert.apply_async(tools.launch_cmdExt_with_timeout_reload, (cmd,2,300)))
             else:
                 for audio in self.audios[language]:
                     if audio["compatible"]:
@@ -212,7 +227,7 @@ class video():
                             nameFilesExtractCut.append(nameOutFile)
                             cmd = baseCommand.copy()
                             cmd.extend(["-map", "0:"+str(audio['StreamOrder']), "-ss", cut[0], "-t", cut[1] , nameOutFile])
-                            self.ffmpeg_progress_audio.append(ffmpeg_pool_audio_convert.apply_async(tools.launch_cmdExt, (cmd,)))
+                            self.ffmpeg_progress_audio.append(ffmpeg_pool_audio_convert.apply_async(tools.launch_cmdExt_with_timeout_reload, (cmd,2,300)))
                             cutNumber += 1
             
     def remove_tmp_files(self,type_file=None):
@@ -305,6 +320,9 @@ class video():
         if self.mediadata == None:
             self.get_mediadata()
         
+        if tools.dev:
+            stderr.write("\t\tStart to calculate the md5 of the streams\n")
+        
         length_video = float(self.video['Duration'])
         if length_video > 20:
             length_video = length_video-10.0
@@ -331,14 +349,11 @@ class video():
         for language, data in self.subtitles.items():
             task_subtitle[language] = []
             for subtitle in data:
-                if dic_index_data_sub_codec[int(subtitle["StreamOrder"])]["codec_name"] != None:
-                    codec = dic_index_data_sub_codec[int(subtitle["StreamOrder"])]["codec_name"].lower()
-                    if codec in tools.sub_type_not_encodable:
-                        task_subtitle[language].append(ffmpeg_pool_audio_convert.apply_async(md5_calculator,(self.filePath,subtitle["StreamOrder"],10,length_video,float(subtitle['Duration']))))
-                    else:
-                        task_subtitle[language].append(ffmpeg_pool_audio_convert.apply_async(subtitle_text_md5,(self.filePath,subtitle["StreamOrder"])))
-                else:
-                    task_subtitle[language].append(ffmpeg_pool_audio_convert.apply_async(md5_calculator,(self.filePath,subtitle["StreamOrder"],10,length_video,float(subtitle['Duration']))))
+                task_subtitle[language].append(subtitle_md5_second(self.filePath,subtitle,dic_index_data_sub_codec,length_video))
+                task_subtitle[language][-1].start()
+        
+        if tools.dev:
+            stderr.write("\t\tStart to wait the end of the md5 calculation of the streams\n")
         
         for language, data in task_audio.items():
             i=0
@@ -370,15 +385,13 @@ class video():
                     stderr.write(f"Error with {self.filePath} during the md5 calculation of the stream {result[0]}")
                 i += 1
 
+        if tools.dev:
+            stderr.write("\t\tStart to wait the end of the md5 calculation of the subtitles\n")
         for language, data in task_subtitle.items():
-            i=0
             for subtitle in data:
-                result = subtitle.get()
-                if result[1] != None:
-                    self.subtitles[language][i]['MD5'] = result[1]
-                else:
-                    stderr.write(f"Error with {self.filePath} during the md5 calculation of the stream {result[0]}")
-                i += 1
+                subtitle.join(timeout=120)
+        if tools.dev:
+            stderr.write("\t\tEnd of the md5 calculation of the subtitles\n")
 
 """
 Preparation function
@@ -386,13 +399,13 @@ Preparation function
 def generate_begin_and_length_by_segment(min_video_duration_in_sec):
     if min_video_duration_in_sec > 540:
         begin_in_second = 120
-        length_time = int((min_video_duration_in_sec-240)/number_cut)
+        length_time = int((min_video_duration_in_sec-240)/(number_cut+1))
     elif min_video_duration_in_sec > 60:
         begin_in_second = 30
-        length_time = int((min_video_duration_in_sec-45)/number_cut)
+        length_time = int((min_video_duration_in_sec-45)/(number_cut+1))
     elif min_video_duration_in_sec > 5:
         begin_in_second = 0
-        length_time = int(min_video_duration_in_sec-2/number_cut)
+        length_time = int(min_video_duration_in_sec-2/(number_cut+1))
 
     return float(begin_in_second),length_time
 
@@ -738,7 +751,7 @@ def test_if_it_better_by_rules(formatFileBase,bitrateFileBase,formatFileChalleng
 
 def md5_calculator(filePath,streamID,start_time=0,end_time=None,duration_stream=None):
     cmd = [
-    tools.software["ffmpeg"], "-v", "error", "-i", filePath,
+    tools.software["ffmpeg"], "-v", "error", "-probesize", "50000000", "-threads", str(1), "-i", filePath,
     "-ss", str(start_time)]
 
     if end_time != None:
@@ -752,11 +765,43 @@ def md5_calculator(filePath,streamID,start_time=0,end_time=None,duration_stream=
 
     cmd.extend(["-map", f"0:{streamID}", "-c", "copy", "-f", "md5", "-"
     ])
-    stdout, stderror, exitCode = tools.launch_cmdExt(cmd)
-    if exitCode == 0:
-        md5 = stdout.decode("utf-8").strip().split("=")[-1]
-        return (streamID, md5)
+    try:
+        stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload(cmd,6,45)
+        if exitCode == 0:
+            md5 = stdout.decode("utf-8").strip().split("=")[-1]
+            return (streamID, md5)
+    except Exception as e:
+        stderr.write(f"Error calculating MD5 for {filePath}, stream {streamID}: {e}\n")
     return (streamID, None)
+
+class subtitle_md5_second(Thread):
+    def __init__(self,filePath,subtitle,dic_index_data_sub_codec,length_video):
+        Thread.__init__(self)
+        self.filePath = filePath
+        self.subtitle = subtitle
+        self.dic_index_data_sub_codec = dic_index_data_sub_codec
+        self.length_video = length_video
+    
+    def run(self):
+        #begin = time()
+        #stderr.write(f"Start to calculate the md5 of the subtitle {self.subtitle['StreamOrder']} for {self.filePath}\n")
+        try:
+            if self.dic_index_data_sub_codec[int(self.subtitle["StreamOrder"])]["codec_name"] != None:
+                codec = self.dic_index_data_sub_codec[int(self.subtitle["StreamOrder"])]["codec_name"].lower()
+                if codec in tools.sub_type_not_encodable:
+                    streamID, md5 = md5_calculator(self.filePath,self.subtitle["StreamOrder"],10,self.length_video,float(self.subtitle['Duration']))
+                else:
+                    streamID, md5 = subtitle_text_md5(self.filePath,self.subtitle["StreamOrder"])
+            else:
+                streamID, md5 = md5_calculator(self.filePath,self.subtitle["StreamOrder"],10,self.length_video,float(self.subtitle['Duration']))
+                
+            if md5 != None:
+                self.subtitle['MD5'] = md5
+                #stderr.write(f"End of the md5 calculation in {time()-begin} of the subtitle {self.subtitle['StreamOrder']} for {self.filePath}\n")
+            else:
+                stderr.write(f"Error with {self.filePath} during the md5 calculation of the stream {self.subtitle['StreamOrder']} (no md5 returned)\n")
+        except Exception as e:
+            stderr.write(f"Error with {self.filePath} during the md5 calculation of the stream {self.subtitle['StreamOrder']}: {e}\n")
 
 def subtitle_text_md5(filePath,streamID):
     number_of_style = count_font_lines_in_ass(filePath, streamID)
@@ -766,16 +811,16 @@ def subtitle_text_md5(filePath,streamID):
         return subtitle_text_srt_md5(filePath,streamID)
 
 def subtitle_text_srt_md5(filePath,streamID):
-    import hashlib
-    import re
     cmd = [
-        tools.software["ffmpeg"], "-v", "error", "-threads", str(tools.core_to_use), "-i", filePath,
+        tools.software["ffmpeg"], "-v", "error", "-probesize", "50000000", "-threads", str(1), "-i", filePath,
         "-map", f"0:{streamID}",
          "-c:s", "srt",
         "-f", "srt", "pipe:1"
     ]
-    stdout, stderror, exitCode = tools.launch_cmdExt(cmd)
+    stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload(cmd,5,30)
     if exitCode == 0:
+        if tools.dev:
+            stderr.write(f"subtitle_text_srt_md5: {streamID} exit OK\n")
         lines = stdout.decode('utf-8', errors='ignore').splitlines()
         text_lines = [re.sub(r'<[^<]+>', '', line) for line in lines if line.strip() and (not line.strip().isdigit()) and ("-->" not in line)]
         filtered_text = "\n".join(text_lines).encode('utf-8')
@@ -789,10 +834,10 @@ def subtitle_text_srt_md5(filePath,streamID):
         return (streamID, None)
 
 def count_font_lines_in_ass(filePath, streamID):
-    import re
     cmd = [
         "ffmpeg",
-        "-v", "error", "-threads", str(tools.core_to_use),
+        "-v", "error", "-probesize", "50000000",
+        "-threads", str(1),
         "-i", filePath,
         "-map", f"0:{streamID}",
         "-c:s", "ass",
@@ -800,8 +845,10 @@ def count_font_lines_in_ass(filePath, streamID):
         "pipe:1"
     ]
     
-    stdout, stderror, exitCode = tools.launch_cmdExt(cmd)
+    stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload(cmd,5,30)
     if exitCode == 0:
+        if tools.dev:
+            stderr.write(f"count_font_lines_in_ass: {streamID} exit OK")
         lines = stdout.decode('utf-8', errors='ignore').splitlines()
 
         style_pattern = re.compile(r'^Style:.+', re.IGNORECASE)
@@ -813,16 +860,16 @@ def count_font_lines_in_ass(filePath, streamID):
         return None
 
 def subtitle_text_ass_md5(filePath,streamID):
-    import hashlib
-    import re
     cmd = [
-        tools.software["ffmpeg"], "-v", "error", "-threads", str(tools.core_to_use), "-i", filePath,
+        tools.software["ffmpeg"], "-v", "error", "-probesize", "50000000", "-threads", str(1), "-i", filePath,
         "-map", f"0:{streamID}",
          "-c:s", "ass",
         "-f", "ass", "pipe:1"
     ]
-    stdout, stderror, exitCode = tools.launch_cmdExt(cmd)
+    stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload(cmd,5,30)
     if exitCode == 0:
+        if tools.dev:
+            stderr.write(f"subtitle_text_ass_md5: {streamID} exit OK")
         lines = stdout.decode('utf-8', errors='ignore').splitlines()
         text_lines = [re.sub(r'^[^,\n]+,\d[^,\n]+,[^,\n]+,', '', line) for line in lines if line.strip()]
         filtered_text = "\n".join(text_lines).encode('utf-8')

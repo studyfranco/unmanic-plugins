@@ -22,7 +22,7 @@
 import logging
 from re import compile,IGNORECASE
 import os
-from datetime import date
+from datetime import date, timedelta, datetime
 from sqlalchemy import create_engine, Column, String, Date, Index
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -40,6 +40,7 @@ class Settings(PluginSettings):
         "exclude_patterns": "",
         "database_url": "sqlite:///config/.unmanic/unmanic_processed_files.db",
         "case_sensitive": True,
+        "exclude_files_younger_than": 0,
     }
     
 
@@ -60,7 +61,15 @@ class Settings(PluginSettings):
             },
             "case_sensitive": {
                 "label": "Recherche sensible à la casse",
-            }
+            },
+            "exclude_files_younger_than": {
+                "label": "Exclure les fichiers plus récents que (en jours)",
+                "input_type":     "slider",
+                "slider_options": {
+                    "min": 0,
+                    "max": 366,
+                },
+            },
         }
 
 Base = declarative_base()
@@ -107,27 +116,35 @@ def on_library_management_file_test(data):
     # Configure settings object
     settings = Settings(library_id=data.get('library_id'))
     
-    file_to_include = False
-    flags = 0 if settings.get_setting('case_sensitive') else IGNORECASE
-    
-    for regex in settings.get_setting('name_patterns').split(','):
-        if len(regex) and (not file_to_include):
-            if compile(regex,flags=flags).match(basename):
-                file_to_include = True
-                logger.debug("File '{}' matches name pattern '{}'.".format(abspath, regex))
-    
-    if file_to_include:
-        for regex in settings.get_setting('exclude_patterns').split(','):
-            if len(regex):
+    # Check if the file is excluded based on the exclude_files_younger_than setting
+    exclude_files_younger_than = settings.get_setting('exclude_files_younger_than')
+    if exclude_files_younger_than == 0 or datetime.fromtimestamp(os.stat(abspath).st_mtime) < (datetime.now() - timedelta(days=exclude_files_younger_than)):
+        file_to_include = False
+        flags = 0 if settings.get_setting('case_sensitive') else IGNORECASE
+        
+        for regex in settings.get_setting('name_patterns').split(','):
+            if len(regex) and (not file_to_include):
                 if compile(regex,flags=flags).match(basename):
-                    data['add_file_to_pending_tasks'] = False
-                    data['issues'].append("File '{}' matches exclude pattern '{}'.".format(abspath, regex))
-                    logger.debug("File '{}' matches exclude pattern '{}'.".format(abspath, regex))
-                    return data
+                    file_to_include = True
+                    logger.debug("File '{}' matches name pattern '{}'.".format(abspath, regex))
+        
+        if file_to_include:
+            for regex in settings.get_setting('exclude_patterns').split(','):
+                if len(regex):
+                    if compile(regex,flags=flags).match(basename):
+                        data['add_file_to_pending_tasks'] = False
+                        data['issues'].append("File '{}' matches exclude pattern '{}'.".format(abspath, regex))
+                        logger.debug("File '{}' matches exclude pattern '{}'.".format(abspath, regex))
+                        return data
+        else:
+            data['add_file_to_pending_tasks'] = False
+            data['issues'].append("File '{}' does not match any include patterns.".format(abspath))
+            logger.debug("File '{}' does not match any include patterns.".format(abspath))
+            return data
     else:
         data['add_file_to_pending_tasks'] = False
-        data['issues'].append("File '{}' does not match any include patterns.".format(abspath))
-        logger.debug("File '{}' does not match any include patterns.".format(abspath))
+        data['issues'].append("File '{}' is younger than the exclude_files_younger_than setting.".format(abspath))
+        logger.debug("File '{}' is younger than the exclude_files_younger_than setting.".format(abspath))
         return data
 
     try:

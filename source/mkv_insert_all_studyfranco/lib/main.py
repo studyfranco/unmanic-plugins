@@ -42,6 +42,8 @@ if __name__ == '__main__':
                         default=".", help="Path to the software, put it if you use the folder from another folder")
     parser.add_argument("--tmp", metavar='tmpdir', type=str,
                         default="/tmp", help="Folder where send temporar files")
+    parser.add_argument("--language_keep", metavar='language_keep', type=str,default="", help="List of languages to keep in the format iso 2 letter: fr,en,de")
+    parser.add_argument("--remove_sub_language_not_keep", metavar='remove_sub_language_not_keep', type=str,default="False", help="Remove the subtitles not in the language to keep")
     args = parser.parse_args()
     
     chdir(args.pwd)
@@ -50,6 +52,13 @@ if __name__ == '__main__':
     try:
         if args.louis == "True":
             tools.louis = True
+        
+        if args.language_keep != "":
+            tools.keep_only_language = True
+            tools.language_to_keep = set(args.language_keep.split(","))
+        
+            if args.remove_sub_language_not_keep == "True":
+                tools.remove_sub_language_not_keep = True
 
         if (not tools.make_dirs(tools.tmpFolder)):
             raise Exception("Impossible to create the temporar dir")

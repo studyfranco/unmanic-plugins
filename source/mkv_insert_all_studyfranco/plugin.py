@@ -32,6 +32,9 @@ logger = logging.getLogger("Unmanic.Plugin.mkv_insert_all_studyfranco")
 class Settings(PluginSettings):
     settings = {
         "louis" : False,
+        "keep_only_language": False,
+        "keep_only_language_values": "",
+        "remove_sub_language_not_keep": False,
     }
     
     def __init__(self, *args, **kwargs):
@@ -40,7 +43,33 @@ class Settings(PluginSettings):
             "louis":           {
                 "label": "Louis parametres",
             },
+            "keep_only_language":  {
+                "label": "Keep only this languages",
+            },
+            "keep_only_language_values": self.__set_language_to_keep(),
+            "remove_sub_language_not_keep": self.__set_remove_sub_language_not_keep(),
         }
+
+    def __set_language_to_keep(self):
+        values = {
+            "label":      "List languages to keep",
+            "description": "List the languages to keep in the format iso 2 letter: fr,en,de,... (comma separated).",
+            "sub_setting": True,
+            "input_type":  "textarea",
+        }
+        if not self.get_setting('keep_only_language'):
+            values["display"] = 'hidden'
+        return values
+
+    def __set_remove_sub_language_not_keep(self):
+        values = {
+            "label": "Remove subtitles not in the language to keep",
+            "description": "Remove the subtitles not in the language to keep. If you don't use this option, the subtitles not in the language to keep will be kept with the original language.",
+            "sub_setting": True,
+        }
+        if not self.get_setting('keep_only_language'):
+            values["display"] = 'hidden'
+        return values
 
 def on_worker_process(data):
     """
@@ -71,6 +100,12 @@ def on_worker_process(data):
         activate_louis = "True"
     else:
         activate_louis = "False"
-    data['exec_command'] = ['python3', "/config/.unmanic/plugins/mkv_insert_studyfranco/lib/main.py", "-o", data.get('file_out'), "-s", data.get('original_file_path'), "-f", data.get('file_in'), "-l", activate_louis, "--pwd", "/config/.unmanic/plugins/mkv_insert_studyfranco", "--tmp", os.path.dirname(data.get('file_out'))]
+        
+    if settings.get_setting('remove_sub_language_not_keep'):
+        remove_sub_language_not_keep = "True"
+    else:
+        remove_sub_language_not_keep = "False"
+        
+    data['exec_command'] = ['python3', "/config/.unmanic/plugins/mkv_insert_studyfranco/lib/main.py", "-o", data.get('file_out'), "-s", data.get('original_file_path'), "-f", data.get('file_in'), "-l", activate_louis, "--pwd", "/config/.unmanic/plugins/mkv_insert_studyfranco", "--tmp", os.path.dirname(data.get('file_out')), "--language_keep", settings.get_setting('keep_only_language_values'), "--remove_sub_language_not_keep", remove_sub_language_not_keep]
 
     return data
