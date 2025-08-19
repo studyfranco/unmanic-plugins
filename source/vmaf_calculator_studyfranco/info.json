@@ -14,5 +14,5 @@
         "on_worker_process": 3
     },
     "tags": "post-processor,mkv,extract,video",
-    "version": "0.0.2"
+    "version": "0.0.3"
 }
