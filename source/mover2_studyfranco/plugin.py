@@ -23,7 +23,6 @@ import hashlib
 import json
 import logging
 import os
-import shutil
 from configparser import NoSectionError, NoOptionError
 
 from unmanic.libs.directoryinfo import UnmanicDirectoryInfo
@@ -86,6 +85,7 @@ def all_parent_directories(head):
 def get_file_out(settings, original_source_path, file_out, library_id=None):
     # Get the destination directory
     destination_directory = settings.get_setting('destination_directory')
+    logger.info(f"The destination_directory is {destination_directory} for the library {library_id}")
 
     # Is the plugin configured to recreate the directory structure?
     if settings.get_setting('recreate_directory_structure'):
@@ -93,6 +93,7 @@ def get_file_out(settings, original_source_path, file_out, library_id=None):
         # Get the parent directory of the original file
         # Eg. /library/path/to/my/file.ext    =   /library/path/to/my
         original_source_dirname = os.path.dirname(original_source_path)
+        logger.info(f"The original_source_dirname is {original_source_dirname}")
 
         if not settings.get_setting('include_library_structure'):
             # Remove the library path from the original_source_dirname
@@ -163,61 +164,64 @@ def on_postprocessor_file_movement(data):
     :return:
 
     """
-    # Configure settings object (maintain compatibility with v1 plugins)
-    if data.get('library_id'):
-        settings = Settings(library_id=data.get('library_id'))
-    else:
-        settings = Settings()
+    try:
+        # Configure settings object (maintain compatibility with v1 plugins)
+        if data.get('library_id'):
+            settings = Settings(library_id=data.get('library_id'))
+        else:
+            settings = Settings()
 
-    # Get the original file's absolute path
-    original_source_path = data.get('source_data', {}).get('abspath')
-    if not original_source_path:
-        logger.error("Provided 'source_data' is missing the source file abspath data.")
-        return data
-
-    unmanic_destination_file = data.get('file_out')
-
-    # Should the plugin remove the source file?
-    # If remove source file is not selected, then prevent the removal of the source file
-    data['remove_source_file'] = settings.get_setting('remove_source_file')
-    # Always prevent Unmanic from running the default file movement (requires Unmanic v0.2.0)
-    data['run_default_file_copy'] = False
-
-    # Set the output file
-    file_out = get_file_out(settings, original_source_path, os.path.abspath(data.get('file_out')),
-                            library_id=data.get('library_id'))
-    data['file_out'] = file_out
-
-    # Set plugin to copy file
-    data['copy_file'] = True
-
-    # Store some required data in a JSON file for the on_postprocessor_task_results runner.
-    # If the source needs to be removed, then we will handle that with the other plugin runner. Notes below...
-    # For now, save the current file_out (which is Unmanic's destination file once all plugins are run) to a file.
-    # We also want to store a checksum of the cache file to ensure that the file movement was completed correctly.
-    profile_directory = settings.get_profile_directory()
-    # Use the basename of the source path to create a unique file for storing the file_out data.
-    # This can then be read and used by the on_postprocessor_task_results function below.
-    src_file_hash = hashlib.md5(original_source_path.encode('utf8')).hexdigest()
-    plugin_data_file = os.path.join(profile_directory, '{}.json'.format(src_file_hash))
-    with open(plugin_data_file, 'w') as f:
-        required_data = {
-            'file_out':                 file_out,
-            'unmanic_destination_file': unmanic_destination_file,
-        }
-        json.dump(required_data, f, indent=4)
-
-    if not settings.get_setting('remove_source_file'):
         # Get the original file's absolute path
         original_source_path = data.get('source_data', {}).get('abspath')
         if not original_source_path:
             logger.error("Provided 'source_data' is missing the source file abspath data.")
             return data
-        if not os.path.exists(original_source_path):
-            logger.error("Original source path could not be found.")
-            return data
 
-    return data
+        unmanic_destination_file = data.get('file_out')
+
+        # Should the plugin remove the source file?
+        # If remove source file is not selected, then prevent the removal of the source file
+        data['remove_source_file'] = settings.get_setting('remove_source_file')
+        # Always prevent Unmanic from running the default file movement (requires Unmanic v0.2.0)
+        data['run_default_file_copy'] = False
+
+        # Set the output file
+        file_out = get_file_out(settings, original_source_path, os.path.abspath(data.get('file_out')),
+                                library_id=data.get('library_id'))
+        data['file_out'] = file_out
+
+        # Set plugin to copy file
+        data['copy_file'] = True
+
+        # Store some required data in a JSON file for the on_postprocessor_task_results runner.
+        # If the source needs to be removed, then we will handle that with the other plugin runner. Notes below...
+        # For now, save the current file_out (which is Unmanic's destination file once all plugins are run) to a file.
+        # We also want to store a checksum of the cache file to ensure that the file movement was completed correctly.
+        profile_directory = settings.get_profile_directory()
+        # Use the basename of the source path to create a unique file for storing the file_out data.
+        # This can then be read and used by the on_postprocessor_task_results function below.
+        src_file_hash = hashlib.md5(original_source_path.encode('utf8')).hexdigest()
+        plugin_data_file = os.path.join(profile_directory, '{}.json'.format(src_file_hash))
+        with open(plugin_data_file, 'w') as f:
+            required_data = {
+                'file_out':                 file_out,
+                'unmanic_destination_file': unmanic_destination_file,
+            }
+            json.dump(required_data, f, indent=4)
+
+        if not settings.get_setting('remove_source_file'):
+            # Get the original file's absolute path
+            original_source_path = data.get('source_data', {}).get('abspath')
+            if not original_source_path:
+                logger.error("Provided 'source_data' is missing the source file abspath data.")
+                return data
+            if not os.path.exists(original_source_path):
+                logger.error("Original source path could not be found.")
+                return data
+
+        return data
+    except Exception as e:
+        logger.error(f"We get an error during the mover calculation: {e}")
 
 
 def on_postprocessor_task_results(data):
@@ -282,16 +286,6 @@ def on_postprocessor_task_results(data):
             os.remove(unmanic_destination_file)
         else:
             logger.debug("Plugin is configured to ensure the original file is removed. File has already been removed.")
-
-    try:
-        logger.error(f"Data {data}")
-    except Exception as e:
-        logger.error("Error accessing data: %s", e)
-    
-    try:
-        shutil.move(os.path.join(os.path.dirname(data.get('final_cache_path')),'stats.stat'), os.path.join(os.path.dirname(data.get('destination_files')[0]), os.path.basename(data.get('final_cache_path'))+".stat"))
-    except Exception as e:
-        logger.error("Failed to move stat file: {}".format(e))
 
     # Clean up plugin's data file
     os.remove(plugin_data_file)
