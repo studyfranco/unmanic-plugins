@@ -311,7 +311,7 @@ def on_postprocessor_task_results(data):
             logger.debug("Ignore on next scan written for '%s'.", original_source_path)
             
     try:
-        logger.error(f"Data {data}")
+        logger.info(f"Data {data}")
     except Exception as e:
         logger.error("Error accessing data: %s", e)
         
