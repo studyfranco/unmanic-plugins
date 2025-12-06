@@ -873,7 +873,7 @@ def merge_videos(file, source, out):
     
     file_video_metadata = video.video(path.dirname(file),path.basename(file))
     file_video_metadata.get_mediadata()
-    if file.multiples_video:
+    if file_video_metadata.multiples_video:
         final_insert.extend(["-A", "-S", "--no-chapters", "-M", "-B", "--no-global-tags", file_video_metadata.video['ID'], file])
     else:
         final_insert.extend(["-A", "-S", "--no-chapters", "-M", "-B", "--no-global-tags", file])
