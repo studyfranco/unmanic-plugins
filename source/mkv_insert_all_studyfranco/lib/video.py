@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding:utf-8 -*-
-
 """
     plugins.global_settings.py
 
@@ -23,6 +20,7 @@
 """
 
 from os import path,remove
+import shutil
 from sys import stderr
 from threading import RLock,Thread
 from time import strftime,gmtime,sleep,time
@@ -69,6 +67,7 @@ class video():
         self.delayFirstMethodAbort = {}
         self.shiftCuts = None
         self.sameAudioMD5UseForCalculation = []
+        self.multiples_video = False
     
     def get_mediadata(self):
         stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload([tools.software["mediainfo"], "--Output=JSON", self.filePath], 5, 90)
@@ -98,30 +97,76 @@ class video():
                     data['ffprobe'] = ffprobe_data[int(data['StreamOrder'])]
                 except:
                     raise Exception(f"{self.filePath} have problematic track id")
+            
+            if 'Language' in data:
+                if is_language(data['Language']):
+                    language_iso_1 = Lang(data['Language']).pt1
+                    if language_iso_1 != None and language_iso_1 != '':
+                        language = language_iso_1
+                    else:
+                        try:
+                            language_iso_1 = Lang(data['Language']).macro().pt1
+                            if language_iso_1 != None and language_iso_1 != '':
+                                language = language_iso_1
+                            else:
+                                language = data['Language'].split("-")[0]
+                        except:
+                            language = data['Language'].split("-")[0]
+                else:
+                    language = data['Language'].split("-")[0]
+            else:
+                language = "und"    
+                
             if data['@type'] == 'Video':
                 if self.video != None:
-                    raise Exception(f"Multiple video in the same file {self.filePath}, I can't compare and merge they")
+                    self.multiples_video = True
+
+                    current_codec = self.video.get('Format', '').upper()
+                    new_codec = data.get('Format', '').upper()
+                    
+                    if current_codec == new_codec:
+                        # Same codec: choose the one with higher bitrate
+                        try:
+                            current_bitrate = int(self.video.get('BitRate', 0))
+                        except (ValueError, TypeError):
+                            current_bitrate = 0
+                            
+                        try:
+                            current_size = int(self.video.get('StreamSize', 0))
+                        except (ValueError, TypeError):
+                            current_size = 0
+
+                        try:
+                            current_duration = int(float(self.video.get('Duration', 0)))
+                        except (ValueError, TypeError):
+                            current_duration = 0
+
+                        try:
+                            new_bitrate = int(data.get('BitRate', 0))
+                        except (ValueError, TypeError):
+                            new_bitrate = 0
+
+                        try:
+                            new_size = int(data.get('StreamSize', 0))
+                        except (ValueError, TypeError):
+                            new_size = 0
+                        
+                        try:
+                            new_duration = int(float(data.get('Duration', 0)))
+                        except (ValueError, TypeError):
+                            new_duration = 0
+                        
+                        if new_duration != 0 and current_duration != 0 and new_size != 0 and current_size != 0 and new_duration == current_duration and new_size > current_size:
+                            self.video = data
+                            self.video['language_iso'] = language
+
+                        elif new_bitrate > current_bitrate:
+                            self.video = data
+                            self.video['language_iso'] = language
                 else:
                     self.video = data
+                    self.video['language_iso'] = language
             else:
-                if 'Language' in data:
-                    if is_language(data['Language']):
-                        language_iso_1 = Lang(data['Language']).pt1
-                        if language_iso_1 != None and language_iso_1 != '':
-                            language = language_iso_1
-                        else:
-                            try:
-                                language_iso_1 = Lang(data['Language']).macro().pt1
-                                if language_iso_1 != None and language_iso_1 != '':
-                                    language = language_iso_1
-                                else:
-                                    language = data['Language'].split("-")[0]
-                            except:
-                                language = data['Language'].split("-")[0]
-                    else:
-                        language = data['Language'].split("-")[0]
-                else:
-                    language = "und"
                 if data['@type'] == 'Audio': 
                     if ('Title' in data and 'commentary' in data['Title'].lower()) or ("flag_commentary" in data['properties'] and data['properties']["flag_commentary"]):
                         if language in self.commentary:
@@ -144,12 +189,19 @@ class video():
                         self.subtitles[language].append(data)
                     else:
                         self.subtitles[language] = [data]
+
+            if 'properties' in data and 'codec' in data['properties']:
+                if data['properties']['codec'].lower() in tools.to_convert_ffmpeg_type:
+                    data["ffmpeg_compatible"] = False
+                else:
+                    data["ffmpeg_compatible"] = True
+            
         if len(self.audios) == 0:
             raise Exception(f"No audio usable to compare the file {self.filePath}")
         if "und" in self.audios and tools.default_language_for_undetermine not in self.audios:
             # This step is linked to mergeVideo.generate_merge_command_insert_ID_audio_track_to_remove_and_new_und_language
             self.audios[tools.default_language_for_undetermine] = self.audios["und"]
-            
+
     def get_best_video(self,data_video_1,data_video_2):
         stderr.write("!"*40+"\n")
         stderr.write(f'Multiple video in the same file {self.filePath}, I will compare the {data_video_1["StreamOrder"]} et {data_video_2["StreamOrder"]} track\n')
@@ -186,7 +238,7 @@ class video():
                 self.remove_tmp_files(type_file="audio")
             self.tmpFiles['audio'] = nameFilesExtract
     
-            baseCommand = [tools.software["ffmpeg"], "-y", "-threads", str(tools.core_to_use), "-nostdin", "-i", self.filePath, "-vn"]
+            baseCommand = [tools.software["ffmpeg"], "-y", "-analyzeduration", "0", "-probesize", "100M", "-threads", str(3), "-nostdin", "-i", self.filePath, "-vn", "-dn"]
             if exportParam['Format'] == 'WAV':
                 if 'codec' in exportParam:
                     baseCommand.extend(["-c:a", exportParam['codec']])
@@ -200,6 +252,7 @@ class video():
                 baseCommand.extend(["-ar", exportParam['SamplingRate']])
             if 'Channels' in exportParam:
                 baseCommand.extend(["-ac", exportParam['Channels']])
+            baseCommand.extend(["-af", "adeclip,acompressor=threshold=-10dB:ratio=4:attack=20:release=250,alimiter=limit=0.97,loudnorm=i=-23.0:lra=7.0:tp=-2.0:linear=true:print_format=json"])
             audio_pos_file = 0
             wait_end_big_job()
             if cutTime == None:
@@ -213,7 +266,7 @@ class video():
                         nameFilesExtractCut.append(nameOutFile)
                         cmd = baseCommand.copy()
                         cmd.extend(["-map", "0:"+str(audio['StreamOrder']), nameOutFile])
-                        self.ffmpeg_progress_audio.append(ffmpeg_pool_audio_convert.apply_async(tools.launch_cmdExt_with_timeout_reload, (cmd,2,300)))
+                        self.ffmpeg_progress_audio.append(ffmpeg_pool_audio_convert.apply_async(tools.launch_cmdExt_with_timeout_reload, (cmd,3,max(600*4,1800))))
             else:
                 for audio in self.audios[language]:
                     if audio["compatible"]:
@@ -227,12 +280,13 @@ class video():
                             nameFilesExtractCut.append(nameOutFile)
                             cmd = baseCommand.copy()
                             cmd.extend(["-map", "0:"+str(audio['StreamOrder']), "-ss", cut[0], "-t", cut[1] , nameOutFile])
-                            self.ffmpeg_progress_audio.append(ffmpeg_pool_audio_convert.apply_async(tools.launch_cmdExt_with_timeout_reload, (cmd,2,300)))
+                            self.ffmpeg_progress_audio.append(ffmpeg_pool_audio_convert.apply_async(tools.launch_cmdExt_with_timeout_reload, (cmd,3,max(600*4,1800))))
                             cutNumber += 1
             
     def remove_tmp_files(self,type_file=None):
-        if type == None:
-            for key,list_tmp in self.tmpFiles:
+        self.wait_end_ffmpeg_progress_audio()
+        if type_file == None:
+            for key,list_tmp in self.tmpFiles.items():
                 for files in list_tmp:
                     for file in files:
                         remove(file)
@@ -671,6 +725,26 @@ def get_less_channel_number(videos_obj,language):
     except:
         return "2"
 
+def get_less_sampling_rate(audios_1,audios_2):
+    worse_sampling_rate = 99999999999999999999999999999
+    for audio_1 in audios_1:
+        try:
+            if worse_sampling_rate > int(audio_1['SamplingRate']):
+                worse_sampling_rate = int(audio_1['SamplingRate'])
+        except:
+            pass
+    for audio_2 in audios_2:
+        try:
+            if worse_sampling_rate > int(audio_2['SamplingRate']):
+                worse_sampling_rate = int(audio_2['SamplingRate'])
+        except:
+            pass
+    
+    if worse_sampling_rate != 99999999999999999999999999999:
+        return str(worse_sampling_rate)
+    else:
+        return str(44100)
+
 def get_shortest_audio_durations(videosObj,language):
     shorter = 1000000000000000000000000000000000
     for videoObj in videosObj:
@@ -751,7 +825,7 @@ def test_if_it_better_by_rules(formatFileBase,bitrateFileBase,formatFileChalleng
 
 def md5_calculator(filePath,streamID,start_time=0,end_time=None,duration_stream=None):
     cmd = [
-    tools.software["ffmpeg"], "-v", "error", "-probesize", "50000000", "-threads", str(1), "-i", filePath,
+    tools.software["ffmpeg"], "-v", "error", "-analyzeduration", "0", "-probesize", "100M", "-threads", "1", "-i", filePath,
     "-ss", str(start_time)]
 
     if end_time != None:
@@ -766,7 +840,7 @@ def md5_calculator(filePath,streamID,start_time=0,end_time=None,duration_stream=
     cmd.extend(["-map", f"0:{streamID}", "-c", "copy", "-f", "md5", "-"
     ])
     try:
-        stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload(cmd,6,45)
+        stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload(cmd,6,60)
         if exitCode == 0:
             md5 = stdout.decode("utf-8").strip().split("=")[-1]
             return (streamID, md5)
@@ -812,31 +886,36 @@ def subtitle_text_md5(filePath,streamID):
 
 def subtitle_text_srt_md5(filePath,streamID):
     cmd = [
-        tools.software["ffmpeg"], "-v", "error", "-probesize", "50000000", "-threads", str(1), "-i", filePath,
+        tools.software["ffmpeg"], "-v", "error", "-analyzeduration", "0", "-probesize", "100M", "-threads", "1", "-i", filePath,
         "-map", f"0:{streamID}",
          "-c:s", "srt",
         "-f", "srt", "pipe:1"
     ]
-    stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload(cmd,5,30)
-    if exitCode == 0:
-        if tools.dev:
-            stderr.write(f"subtitle_text_srt_md5: {streamID} exit OK\n")
-        lines = stdout.decode('utf-8', errors='ignore').splitlines()
-        text_lines = [re.sub(r'<[^<]+>', '', line) for line in lines if line.strip() and (not line.strip().isdigit()) and ("-->" not in line)]
-        filtered_text = "\n".join(text_lines).encode('utf-8')
-        md5 = hashlib.md5(filtered_text).hexdigest()
-        if (not text_lines):
-            stderr.write(f"No subtitle text found in {filePath}, stream {streamID}\n")
-            return (streamID, None)
+    try:
+        stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload(cmd,5,60)
+        if exitCode == 0:
+            if tools.dev:
+                stderr.write(f"subtitle_text_srt_md5: {streamID} exit OK\n")
+            lines = stdout.decode('utf-8', errors='ignore').splitlines()
+            text_lines = [re.sub(r'<[^<]+>', '', line) for line in lines if line.strip() and (not line.strip().isdigit()) and ("-->" not in line)]
+            filtered_text = "\n".join(text_lines).encode('utf-8')
+            md5 = hashlib.md5(filtered_text).hexdigest()
+            if (not text_lines):
+                stderr.write(f"No subtitle text found in {filePath}, stream {streamID}, look {text_lines}\n")
+                return (streamID, None)
+            else:
+                return (streamID, md5)
         else:
-            return (streamID, md5)
-    else:
+            return (streamID, None)
+    except Exception as e:
+        if tools.dev:
+            stderr.write(f"subtitle_text_srt_md5: error during md5 calculation {e}\n")
         return (streamID, None)
 
 def count_font_lines_in_ass(filePath, streamID):
     cmd = [
         "ffmpeg",
-        "-v", "error", "-probesize", "50000000",
+        "-v", "error", "-analyzeduration", "0", "-probesize", "100M",
         "-threads", str(1),
         "-i", filePath,
         "-map", f"0:{streamID}",
@@ -845,7 +924,7 @@ def count_font_lines_in_ass(filePath, streamID):
         "pipe:1"
     ]
     
-    stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload(cmd,5,30)
+    stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload(cmd,5,60)
     if exitCode == 0:
         if tools.dev:
             stderr.write(f"count_font_lines_in_ass: {streamID} exit OK")
@@ -861,7 +940,7 @@ def count_font_lines_in_ass(filePath, streamID):
 
 def subtitle_text_ass_md5(filePath,streamID):
     cmd = [
-        tools.software["ffmpeg"], "-v", "error", "-probesize", "50000000", "-threads", str(1), "-i", filePath,
+        tools.software["ffmpeg"], "-v", "error", "-analyzeduration", "0", "-probesize", "100M", "-threads", "1", "-i", filePath,
         "-map", f"0:{streamID}",
          "-c:s", "ass",
         "-f", "ass", "pipe:1"
@@ -875,7 +954,7 @@ def subtitle_text_ass_md5(filePath,streamID):
         filtered_text = "\n".join(text_lines).encode('utf-8')
         md5 = hashlib.md5(filtered_text).hexdigest()
         if (not text_lines):
-            stderr.write(f"No subtitle text found in {filePath}, stream {streamID}\n")
+            stderr.write(f"No subtitle text found in {filePath}, stream {streamID}, look {text_lines}\n")
             return (streamID, None)
         else:
             return (streamID, md5)

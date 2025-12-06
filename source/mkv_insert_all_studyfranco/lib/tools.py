@@ -211,6 +211,7 @@ def extract_ffmpeg_type_dict_all(filePath):
         dic_index_data_sub_codec[data["index"]] = data
     return dic_index_data_sub_codec
 
+tmpFolder_original = "/tmp"
 tmpFolder = "/tmp"
 software = { "mediainfo":"mediainfo",
             "ffmpeg":"ffmpeg",
@@ -222,10 +223,18 @@ core_to_use = 1
 default_language_for_undetermine = 'und'
 dev = False
 special_params = {"change_all_und": False, "original_language":""}
-mergeRules = None
+mergeRules = {"audio": "DTS>E-AC-3*1.1>AAC*2>MP3,DTS=Flac,Flac>AAC,Flac>E-AC-3,Flac>MP3,Flac>OPUS,AAC*1.1>AC-3,Flac>AC-3,DTS>AC-3,E-AC-3*1>AC-3,AAC*1>E-AC-3,Flac>PCM,AAC LC SBR*1.0>E-AC-3,AAC LC SBR*1.0>AC-3,AAC LC SBR*2>MP3,AAC LC SBR*1>AAC,AAC*1>AAC LC SBR,FLAC>AAC LC SBR,DTS>AAC LC SBR,E-AC-3*1.1>AAC LC SBR"}
 sub_type_not_encodable = set(["hdmv_pgs_subtitle","dvd_subtitle","s_hdmv/pgs","pgs","vobsub","s_vobsub"])
 sub_type_near_srt = set(["srt","utf-8","utf-16","utf-16le","utf-16be","utf-32","utf-32le","utf-32be","vtt","webvtt","subrip"])
+to_convert_ffmpeg_type = {
+    "webvtt": ["webvtt","srt"]
+}
+folder_error = "."
+group_title_sub = {}
+language_to_completely_remove = set()
+language_to_try_to_keep = []
+
 louis = False
 keep_only_language = False
-language_to_keep = set()
+language_to_keep = []
 remove_sub_language_not_keep = False

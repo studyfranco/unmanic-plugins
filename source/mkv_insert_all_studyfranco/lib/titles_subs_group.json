@@ -1,0 +1,21 @@
+{
+    "ar":[["saudi arabia","arabic (saudi arabia)"],["","arabic"]],
+    "cmn":[["","mandarin"]],
+    "de":[["","german","cr"]],
+    "en":[["","english","hidi","cr"],["[toonshub] english (united states)","united states"]],
+    "es":[["spanish (latin america)","latin american","latin_american_cr","[toonshub] spanish (mexico)","spanish(latin_america)"],["","spanish","spanish (spain)","european","cr"]],
+    "fil":[["","filipino"]],
+    "fr":[["","french (france)","french","european","cr"]],
+    "id":[["","indonesian"]],
+    "it":[["","italian","cr"]],
+    "ja":[["","japanese"]],
+    "ko":[["","korean"]],
+    "ms":[["","malay"]],
+    "pl":[["","polish"]],
+    "pt":[["","european"],["portuguese (brazil)","brazilian","brazilian_cr","[toonshub] portuguese (brazil)","portuguese(brazil)"]],
+    "ru":[["","russian","cr"]],
+    "th":[["","thai"]],
+    "tr":[["","turkish"]],
+    "vi":[["","vietnamese"]],
+    "zh":[["","chinese"],["chinese (hong kong sar china)"],["chinese (simplified)","simplified"],["chinese (traditional)","traditional"]]
+}

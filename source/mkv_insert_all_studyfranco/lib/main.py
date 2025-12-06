@@ -28,6 +28,7 @@ from multiprocessing import Pool
 from os import path,chdir
 import traceback
 import tools
+import json
 import multiprocessing
 
 if __name__ == '__main__':
@@ -48,6 +49,7 @@ if __name__ == '__main__':
     
     chdir(args.pwd)
     tools.tmpFolder = path.join(args.tmp,"mkv_insert_"+str(datetime.now().strftime("%Y-%m-%d_%H:%M:%S")))
+    tools.tmpFolder_original = tools.tmpFolder
     
     try:
         if args.louis == "True":
@@ -55,7 +57,7 @@ if __name__ == '__main__':
         
         if args.language_keep != "":
             tools.keep_only_language = True
-            tools.language_to_keep = set(args.language_keep.split(","))
+            tools.language_to_keep = args.language_keep.split(",")
         
             if args.remove_sub_language_not_keep == "True":
                 tools.remove_sub_language_not_keep = True
@@ -63,13 +65,18 @@ if __name__ == '__main__':
         if (not tools.make_dirs(tools.tmpFolder)):
             raise Exception("Impossible to create the temporar dir")
 
-        tools.core_to_use = multiprocessing.cpu_count()
+        tools.core_to_use = multiprocessing.cpu_count()-2
+        if tools.core_to_use < 1:
+            tools.core_to_use = 1
 
         import mergeVideo
         import video
         
         video.ffmpeg_pool_audio_convert = Pool(processes=tools.core_to_use)
-        video.ffmpeg_pool_big_job = Pool(processes=multiprocessing.cpu_count())
+        video.ffmpeg_pool_big_job = Pool(processes=1)
+        
+        with open("titles_subs_group.json") as titles_subs_group_file:
+            tools.group_title_sub = json.load(titles_subs_group_file)
 
         mergeVideo.merge_videos(args.file, args.source, args.out)
         tools.remove_dir(tools.tmpFolder)
