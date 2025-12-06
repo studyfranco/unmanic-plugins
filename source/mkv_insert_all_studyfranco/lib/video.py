@@ -97,7 +97,15 @@ class video():
                     data['ffprobe'] = ffprobe_data[int(data['StreamOrder'])]
                 except:
                     raise Exception(f"{self.filePath} have problematic track id")
-            
+
+            if 'properties' in data and 'codec' in data['properties']:
+                if data['properties']['codec'].lower() in tools.to_convert_ffmpeg_type:
+                    data["ffmpeg_compatible"] = False
+                else:
+                    data["ffmpeg_compatible"] = True
+            else:
+                data["ffmpeg_compatible"] = True
+
             if 'Language' in data:
                 if is_language(data['Language']):
                     language_iso_1 = Lang(data['Language']).pt1
@@ -190,12 +198,6 @@ class video():
                     else:
                         self.subtitles[language] = [data]
 
-            if 'properties' in data and 'codec' in data['properties']:
-                if data['properties']['codec'].lower() in tools.to_convert_ffmpeg_type:
-                    data["ffmpeg_compatible"] = False
-                else:
-                    data["ffmpeg_compatible"] = True
-            
         if len(self.audios) == 0:
             raise Exception(f"No audio usable to compare the file {self.filePath}")
         if "und" in self.audios and tools.default_language_for_undetermine not in self.audios:
