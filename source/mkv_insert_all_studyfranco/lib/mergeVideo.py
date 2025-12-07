@@ -710,6 +710,9 @@ def extract_stream(video_obj, type_stream, id_stream, out_file):
 def generate_new_file_audio_config(video_obj,base_cmd,audio,md5_audio_already_added,ffmpeg_cmd_dict,duration_best_video):
     if ((not audio["keep"]) or (audio["MD5"] != '' and audio["MD5"] in md5_audio_already_added)):
         return 0
+    elif int(audio.get("StreamSize", 1)) == 0 or float(audio.get("Duration", 1)) == 0:
+        sys.stderr.write(f"Skip the element {audio['StreamOrder']}, it seems to be empty\n")
+        return 0
     else:
         tmp_file_extract = path.join(tools.tmpFolder,f"{video_obj.fileBaseName}_{audio['StreamOrder']}_tmp_extr.mkv")
         extract_stream(video_obj, "audio", audio['StreamOrder'], tmp_file_extract)
@@ -753,13 +756,16 @@ def generate_new_file_audio_config(video_obj,base_cmd,audio,md5_audio_already_ad
 def generate_new_file(video_obj,ffmpeg_cmd_dict,md5_audio_already_added,md5_sub_already_added,duration_best_video):
     base_cmd = [tools.software["ffmpeg"], "-err_detect", "crccheck", "-err_detect", "bitstream",
                     "-err_detect", "buffer", "-err_detect", "explode", "-fflags", "+genpts+igndts",
-                    "-analyzeduration", "0", "-probesize", "100M",
+                    "-probesize", "500M",
                     "-threads", str(tools.core_to_use), "-vn"]
     
     number_track = 0
     for language,subs in video_obj.subtitles.items():
         for sub in subs:
-            if (sub['keep'] and sub['MD5'] not in md5_sub_already_added):
+            # Skip empty stream
+            if int(sub.get("StreamSize", 1)) == 0 or float(sub.get("Duration", 1)) == 0:
+                sys.stderr.write(f"Skip the element {sub['StreamOrder']}, it seems to be empty\n")
+            elif (sub['keep'] and sub['MD5'] not in md5_sub_already_added):
                 number_track += 1
                 tmp_file_extract = path.join(tools.tmpFolder,f"{video_obj.fileBaseName}_{sub['StreamOrder']}_tmp_extr.mkv")
                 extract_stream(video_obj, "subtitle", sub['StreamOrder'], tmp_file_extract)
@@ -854,7 +860,7 @@ def merge_videos(file, source, out):
         sys.stderr.write(f'\t\tFile {out_path_tmp_file_name_split} produce\n')
     
     tools.launch_cmdExt_with_timeout_reload([tools.software["ffmpeg"], "-err_detect", "crccheck", "-err_detect", "bitstream",
-                         "-err_detect", "buffer", "-err_detect", "explode", "-analyzeduration", "0", "-probesize", "100M", "-threads", str(tools.core_to_use),
+                         "-err_detect", "buffer", "-err_detect", "explode", "-analyzeduration", "0", "-probesize", "500M", "-threads", str(tools.core_to_use),
                          "-i", out_path_tmp_file_name_split, "-map", "0", "-f", "null", "-c", "copy", "-"], 2, 360)
     
     if tools.dev:
@@ -959,5 +965,5 @@ def merge_videos(file, source, out):
         sys.stderr.write("\t\tFile produce\n")
     
     tools.launch_cmdExt_with_timeout_reload([tools.software["ffmpeg"], "-err_detect", "crccheck", "-err_detect", "bitstream",
-                         "-err_detect", "buffer", "-err_detect", "explode", "-analyzeduration", "0", "-probesize", "100M", "-threads", str(tools.core_to_use),
+                         "-err_detect", "buffer", "-err_detect", "explode", "-analyzeduration", "0", "-probesize", "500M", "-threads", str(tools.core_to_use),
                          "-i", out, "-map", "0", "-f", "null", "-c", "copy", "-"], 2, 360)

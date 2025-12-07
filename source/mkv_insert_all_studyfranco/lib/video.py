@@ -70,11 +70,11 @@ class video():
         self.multiples_video = False
     
     def get_mediadata(self):
-        stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload([tools.software["mediainfo"], "--Output=JSON", self.filePath], 5, 90)
+        stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload([tools.software["mediainfo"], "--Output=JSON", self.filePath], 5, 360)
         if exitCode != 0:
             raise Exception("Error with {} during the mediadata: {}".format(self.filePath,stderror.decode("UTF-8")))
         self.mediadata = json.loads(stdout.decode("UTF-8"))
-        stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload([tools.software["mkvmerge"],"-i", "-F", "json", self.filePath], 5, 90)
+        stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload([tools.software["mkvmerge"],"-i", "-F", "json", self.filePath], 5, 360)
         if exitCode != 0:
             raise Exception("Error with {} during the mkvmerge metadata: {}".format(self.filePath,stderror.decode("UTF-8")))
         self.mkvmergedata = json.loads(stdout.decode("UTF-8"))
@@ -267,7 +267,7 @@ class video():
                         nameFilesExtractCut.append(nameOutFile)
                         cmd = baseCommand.copy()
                         cmd.extend(["-map", "0:"+str(audio['StreamOrder']), nameOutFile])
-                        self.ffmpeg_progress_audio.append(ffmpeg_pool_audio_convert.apply_async(tools.launch_cmdExt_with_timeout_reload, (cmd,3,max(600*4,1800))))
+                        self.ffmpeg_progress_audio.append(ffmpeg_pool_audio_convert.apply_async(tools.launch_cmdExt_with_timeout_reload, (cmd,3,max(600*5,2400))))
             else:
                 for audio in self.audios[language]:
                     if audio["compatible"]:
@@ -281,7 +281,7 @@ class video():
                             nameFilesExtractCut.append(nameOutFile)
                             cmd = baseCommand.copy()
                             cmd.extend(["-map", "0:"+str(audio['StreamOrder']), "-ss", cut[0], "-t", cut[1] , nameOutFile])
-                            self.ffmpeg_progress_audio.append(ffmpeg_pool_audio_convert.apply_async(tools.launch_cmdExt_with_timeout_reload, (cmd,3,max(600*4,1800))))
+                            self.ffmpeg_progress_audio.append(ffmpeg_pool_audio_convert.apply_async(tools.launch_cmdExt_with_timeout_reload, (cmd,3,max(600*5,2400))))
                             cutNumber += 1
             
     def remove_tmp_files(self,type_file=None):
@@ -826,7 +826,7 @@ def test_if_it_better_by_rules(formatFileBase,bitrateFileBase,formatFileChalleng
 
 def md5_calculator(filePath,streamID,start_time=0,end_time=None,duration_stream=None):
     cmd = [
-    tools.software["ffmpeg"], "-v", "error", "-analyzeduration", "0", "-probesize", "100M", "-threads", "1", "-i", filePath,
+    tools.software["ffmpeg"], "-v", "error", "-analyzeduration", "0", "-probesize", "500M", "-threads", "1", "-i", filePath,
     "-ss", str(start_time)]
 
     if end_time != None:
@@ -841,7 +841,7 @@ def md5_calculator(filePath,streamID,start_time=0,end_time=None,duration_stream=
     cmd.extend(["-map", f"0:{streamID}", "-c", "copy", "-f", "md5", "-"
     ])
     try:
-        stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload(cmd,6,60)
+        stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload(cmd,6,120)
         if exitCode == 0:
             md5 = stdout.decode("utf-8").strip().split("=")[-1]
             return (streamID, md5)
@@ -887,13 +887,13 @@ def subtitle_text_md5(filePath,streamID):
 
 def subtitle_text_srt_md5(filePath,streamID):
     cmd = [
-        tools.software["ffmpeg"], "-v", "error", "-analyzeduration", "0", "-probesize", "100M", "-threads", "1", "-i", filePath,
+        tools.software["ffmpeg"], "-v", "error", "-analyzeduration", "0", "-probesize", "500M", "-threads", "1", "-i", filePath,
         "-map", f"0:{streamID}",
          "-c:s", "srt",
         "-f", "srt", "pipe:1"
     ]
     try:
-        stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload(cmd,5,60)
+        stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload(cmd,5,120)
         if exitCode == 0:
             if tools.dev:
                 stderr.write(f"subtitle_text_srt_md5: {streamID} exit OK\n")
@@ -916,7 +916,7 @@ def subtitle_text_srt_md5(filePath,streamID):
 def count_font_lines_in_ass(filePath, streamID):
     cmd = [
         "ffmpeg",
-        "-v", "error", "-analyzeduration", "0", "-probesize", "100M",
+        "-v", "error", "-analyzeduration", "0", "-probesize", "500M",
         "-threads", str(1),
         "-i", filePath,
         "-map", f"0:{streamID}",
@@ -925,7 +925,7 @@ def count_font_lines_in_ass(filePath, streamID):
         "pipe:1"
     ]
     
-    stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload(cmd,5,60)
+    stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload(cmd,5,120)
     if exitCode == 0:
         if tools.dev:
             stderr.write(f"count_font_lines_in_ass: {streamID} exit OK")
@@ -941,12 +941,12 @@ def count_font_lines_in_ass(filePath, streamID):
 
 def subtitle_text_ass_md5(filePath,streamID):
     cmd = [
-        tools.software["ffmpeg"], "-v", "error", "-analyzeduration", "0", "-probesize", "100M", "-threads", "1", "-i", filePath,
+        tools.software["ffmpeg"], "-v", "error", "-analyzeduration", "0", "-probesize", "500M", "-threads", "1", "-i", filePath,
         "-map", f"0:{streamID}",
          "-c:s", "ass",
         "-f", "ass", "pipe:1"
     ]
-    stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload(cmd,5,30)
+    stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload(cmd,5,120)
     if exitCode == 0:
         if tools.dev:
             stderr.write(f"subtitle_text_ass_md5: {streamID} exit OK")
