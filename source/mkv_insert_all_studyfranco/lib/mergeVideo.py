@@ -753,7 +753,14 @@ def generate_new_file_audio_config(video_obj,base_cmd,audio,md5_audio_already_ad
         ffmpeg_cmd_dict['merge_cmd'].extend(["--no-global-tags", "-M", "-B", tmp_file_convert])
         return 1
 
-def generate_new_file(video_obj,ffmpeg_cmd_dict,md5_audio_already_added,md5_sub_already_added,duration_best_video):
+def generate_new_file(video_obj_original,ffmpeg_cmd_dict,md5_audio_already_added,md5_sub_already_added,duration_best_video):
+    file_without_video = path.join(tools.tmpFolder,f"{video_obj_original.fileBaseName}_without_video.mkv")
+    tools.launch_cmdExt([tools.software["mkvmerge"], "-o", out_file, "-D","--no-global-tags", "-M", "-B", "--no-chapters", file_without_video])
+
+    video_obj = video.video(path.dirname(file_without_video),path.basename(file_without_video))
+    video_obj.get_mediadata()
+    video_obj.calculate_md5_streams()
+
     base_cmd = [tools.software["ffmpeg"], "-err_detect", "crccheck", "-err_detect", "bitstream",
                     "-err_detect", "buffer", "-err_detect", "explode", "-fflags", "+genpts+igndts",
                     "-probesize", "500M",
@@ -807,7 +814,7 @@ def generate_new_file(video_obj,ffmpeg_cmd_dict,md5_audio_already_added,md5_sub_
             number_track += generate_new_file_audio_config(video_obj,base_cmd,audio,md5_audio_already_added,ffmpeg_cmd_dict,duration_best_video)
     
     if number_track:
-        ffmpeg_cmd_dict['metadata_cmd'].extend(["-A", "-S", "-D", video_obj.filePath])
+        ffmpeg_cmd_dict['metadata_cmd'].extend(["-A", "-S", "-D", video_obj_original.filePath])
     return number_track
 
 def merge_videos(file, source, out):
@@ -822,7 +829,7 @@ def merge_videos(file, source, out):
     
     source_video_metadata = video.video(path.dirname(source),path.basename(source))
     source_video_metadata.get_mediadata()
-    source_video_metadata.calculate_md5_streams()
+    #source_video_metadata.calculate_md5_streams()
     
     if source_video_metadata.video['language_iso'] != "und":
         language = source_video_metadata.video['Language'].split("-")[0]
