@@ -65,7 +65,7 @@ if __name__ == '__main__':
         if (not tools.make_dirs(tools.tmpFolder)):
             raise Exception("Impossible to create the temporar dir")
 
-        tools.core_to_use = multiprocessing.cpu_count()-2
+        tools.core_to_use = len(os.sched_getaffinity(0))-2
         if tools.core_to_use < 1:
             tools.core_to_use = 1
 

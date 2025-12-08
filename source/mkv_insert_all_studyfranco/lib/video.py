@@ -307,6 +307,7 @@ class video():
     def calculate_md5_streams(self):
         if self.mediadata == None:
             self.get_mediadata()
+        global ffmpeg_pool_audio_convert
         task_audio = {}
         for language, data in self.audios.items():
             task_audio[language] = []
@@ -378,6 +379,7 @@ class video():
         if tools.dev:
             stderr.write("\t\tStart to calculate the md5 of the streams\n")
         
+        global ffmpeg_pool_audio_convert
         length_video = float(self.video['Duration'])
         if length_video > 20:
             length_video = length_video-10.0
@@ -444,7 +446,7 @@ class video():
             stderr.write("\t\tStart to wait the end of the md5 calculation of the subtitles\n")
         for language, data in task_subtitle.items():
             for subtitle in data:
-                subtitle.join(timeout=120)
+                subtitle.join(timeout=240)
         if tools.dev:
             stderr.write("\t\tEnd of the md5 calculation of the subtitles\n")
 
