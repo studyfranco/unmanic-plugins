@@ -755,7 +755,7 @@ def generate_new_file_audio_config(video_obj,base_cmd,audio,md5_audio_already_ad
 
 def generate_new_file(video_obj_original,ffmpeg_cmd_dict,md5_audio_already_added,md5_sub_already_added,duration_best_video):
     file_without_video = path.join(tools.tmpFolder,f"{video_obj_original.fileBaseName}_without_video.mkv")
-    tools.launch_cmdExt([tools.software["mkvmerge"], "-o", out_file, "-D","--no-global-tags", "-M", "-B", "--no-chapters", file_without_video])
+    tools.launch_cmdExt([tools.software["mkvmerge"], "-o", file_without_video, "-D","--no-global-tags", "-M", "-B", "--no-chapters", video_obj.filePath])
 
     video_obj = video.video(path.dirname(file_without_video),path.basename(file_without_video))
     video_obj.get_mediadata()
