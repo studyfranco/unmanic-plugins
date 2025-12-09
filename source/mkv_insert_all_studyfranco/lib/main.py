@@ -25,7 +25,7 @@
 import argparse
 from datetime import datetime
 from multiprocessing import Pool
-from os import path,chdir
+from os import path,chdir,sched_getaffinity
 import traceback
 import tools
 import json
@@ -65,7 +65,7 @@ if __name__ == '__main__':
         if (not tools.make_dirs(tools.tmpFolder)):
             raise Exception("Impossible to create the temporar dir")
 
-        tools.core_to_use = len(os.sched_getaffinity(0))-2
+        tools.core_to_use = len(sched_getaffinity(0))-2
         if tools.core_to_use < 1:
             tools.core_to_use = 1
 
