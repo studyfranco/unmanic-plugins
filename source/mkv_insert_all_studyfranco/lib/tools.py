@@ -228,6 +228,7 @@ sub_type_not_encodable = set(["hdmv_pgs_subtitle","dvd_subtitle","s_hdmv/pgs","p
 sub_type_near_srt = set(["srt","utf-8","utf-16","utf-16le","utf-16be","utf-32","utf-32le","utf-32be","vtt","webvtt","subrip"])
 to_convert_ffmpeg_type = {
     "webvtt": ["webvtt","srt"]
+    "s_text/webvtt": ["webvtt","srt"]
 }
 folder_error = "."
 group_title_sub = {}

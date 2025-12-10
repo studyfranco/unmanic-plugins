@@ -98,7 +98,7 @@ class video():
                 except:
                     raise Exception(f"{self.filePath} have problematic track id")
 
-            if 'properties' in data and 'codec' in data['properties'] and data['properties']['codec'].lower() in tools.to_convert_ffmpeg_type:
+            if ('properties' in data and 'codec' in data['properties'] and data['properties']['codec'].lower() in tools.to_convert_ffmpeg_type) or (data.get("Format","").lower() in tools.to_convert_ffmpeg_type):
                     data['ffmpeg_to_convert'] = tools.to_convert_ffmpeg_type[data['properties']['codec'].lower()]
 
             if 'Language' in data:
