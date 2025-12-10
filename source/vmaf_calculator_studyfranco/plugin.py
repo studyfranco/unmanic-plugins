@@ -70,7 +70,7 @@ def on_worker_process(data):
     stdout, stderror, exitCode = launch_cmdExt_no_test(['mkvmerge', "-o", path.join(path.dirname(data.get('file_out')),'converted.mkv'), "-A", "-S", "-M", "-B", "--no-chapters", "--no-attachments", "--no-global-tags", data.get('file_in')])
     
     # Apply ffmpeg args to command
-    data['exec_command'] = ['ffmpeg', '-loglevel', 'error', '-stats', '-i', path.join(path.dirname(data.get('file_out')),'converted.mkv'), '-i', path.join(path.dirname(data.get('file_out')),'source.mkv'), '-lavfi', f"libvmaf=log_path='{path.join(path.dirname(data.get('file_in')),path.basename(data.get('original_file_path')).replace(":",""))}_vmaf.log':log_fmt=json:n_threads={multiprocessing.cpu_count()}", '-f', 'null', '-an', '-sn', '-']
+    data['exec_command'] = ['ffmpeg', '-loglevel', 'error', '-stats', '-i', path.join(path.dirname(data.get('file_out')),'converted.mkv'), '-i', path.join(path.dirname(data.get('file_out')),'source.mkv'), '-lavfi', f"libvmaf=log_path='{path.join(path.dirname(data.get('file_in')),re.sub(r'[^\w\-\.]', '_',path.basename(data.get('original_file_path'))))}_vmaf.log':log_fmt=json:n_threads={multiprocessing.cpu_count()}", '-f', 'null', '-an', '-sn', '-']
 
     return data
 
@@ -92,10 +92,10 @@ def on_postprocessor_task_results(data):
     """
     if data.get('task_processing_success') and data.get('file_move_processes_success'):
         try:
-            with open(path.join(path.dirname(data.get('final_cache_path')),path.basename(data.get('source_data', {}).get('abspath')).replace(":",""))+"_vmaf.log") as f:
+            with open(path.join(path.dirname(data.get('final_cache_path')),re.sub(r'[^\w\-\.]', '_',path.basename(data.get('source_data', {}).get('abspath'))))+"_vmaf.log") as f:
                 vmaf = json.load(f)
             
-            shutil.move(path.join(path.dirname(data.get('final_cache_path')),path.basename(data.get('source_data', {}).get('abspath')).replace(":",""))+"_vmaf.log", path.join(path.dirname(data.get('destination_files')[0]), path.basename(data.get('source_data', {}).get('abspath'))+f"_vmaf__{vmaf['pooled_metrics']['vmaf']['mean']}__.log"))
+            shutil.move(path.join(path.dirname(data.get('final_cache_path')),re.sub(r'[^\w\-\.]', '_',path.basename(data.get('source_data', {}).get('abspath'))))+"_vmaf.log", path.join(path.dirname(data.get('destination_files')[0]), path.basename(data.get('source_data', {}).get('abspath'))+f"_vmaf__{vmaf['pooled_metrics']['vmaf']['mean']}__.log"))
         except Exception as e:
             logger.error("Failed to move VMAF log file: {}".format(e))
             

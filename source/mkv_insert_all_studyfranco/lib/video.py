@@ -98,13 +98,8 @@ class video():
                 except:
                     raise Exception(f"{self.filePath} have problematic track id")
 
-            if 'properties' in data and 'codec' in data['properties']:
-                if data['properties']['codec'].lower() in tools.to_convert_ffmpeg_type:
-                    data["ffmpeg_compatible"] = False
-                else:
-                    data["ffmpeg_compatible"] = True
-            else:
-                data["ffmpeg_compatible"] = True
+            if 'properties' in data and 'codec' in data['properties'] and data['properties']['codec'].lower() in tools.to_convert_ffmpeg_type:
+                    data['ffmpeg_to_convert'] = tools.to_convert_ffmpeg_type[data['properties']['codec'].lower()]
 
             if 'Language' in data:
                 if is_language(data['Language']):

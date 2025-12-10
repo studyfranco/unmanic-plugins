@@ -777,8 +777,8 @@ def generate_new_file(video_obj_original,ffmpeg_cmd_dict,md5_audio_already_added
                 tmp_file_extract = path.join(tools.tmpFolder,f"{video_obj.fileBaseName}_{sub['StreamOrder']}_tmp_extr.mkv")
                 extract_stream(video_obj, "subtitle", sub['StreamOrder'], tmp_file_extract)
                 cmd_convert = base_cmd.copy()
-                if (not sub["ffmpeg_compatible"]) and 'properties' in sub and 'codec' in sub['properties'] and sub['properties']['codec'].lower() in tools.to_convert_ffmpeg_type:
-                    cmd_convert.append(tools.to_convert_ffmpeg_type[sub['properties']['codec'].lower()][0])
+                if 'ffmpeg_to_convert' in sub:
+                    cmd_convert.append(sub['ffmpeg_to_convert'][0])
                 cmd_convert.extend(["-i", tmp_file_extract,
                      "-map", "0:a?", "-map", "0:s?", "-map_metadata", "0", "-copy_unknown",
                      "-movflags", "use_metadata_tags", "-c", "copy"])
@@ -786,9 +786,9 @@ def generate_new_file(video_obj_original,ffmpeg_cmd_dict,md5_audio_already_added
                 if sub['MD5'] != '':
                     md5_sub_already_added.add(sub['MD5'])
                 codec = sub["Format"].lower()
-                if (not sub["ffmpeg_compatible"]) and 'properties' in sub and 'codec' in sub['properties'] and sub['properties']['codec'].lower() in tools.to_convert_ffmpeg_type:
+                if 'ffmpeg_to_convert' in sub:
                     cmd_convert.append(f"-c:s")
-                    cmd_convert.append(tools.to_convert_ffmpeg_type[sub['properties']['codec'].lower()][1])
+                    cmd_convert.append(sub['ffmpeg_to_convert'][1])
                 elif codec in tools.sub_type_not_encodable:
                     cmd_convert.extend(["-copyts", "-avoid_negative_ts", "disabled"])
                     cmd_convert.remove("-fflags")
@@ -887,7 +887,7 @@ def merge_videos(file, source, out):
     file_video_metadata = video.video(path.dirname(file),path.basename(file))
     file_video_metadata.get_mediadata()
     if file_video_metadata.multiples_video:
-        final_insert.extend(["-A", "-S", "--no-chapters", "-M", "-B", "--no-global-tags", file_video_metadata.video['ID'], file])
+        final_insert.extend(["-A", "-S", "--no-chapters", "-M", "-B", "--no-global-tags", "--video-tracks", file_video_metadata.video['StreamOrder'], file])
     else:
         final_insert.extend(["-A", "-S", "--no-chapters", "-M", "-B", "--no-global-tags", file])
     
