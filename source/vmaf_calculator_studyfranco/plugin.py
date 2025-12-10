@@ -24,6 +24,7 @@ import multiprocessing
 from os import path
 import shutil
 import json
+import re
 
 from unmanic.libs.directoryinfo import UnmanicDirectoryInfo
 from unmanic.libs.unplugins.settings import PluginSettings
