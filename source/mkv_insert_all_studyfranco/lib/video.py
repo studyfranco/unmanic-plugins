@@ -98,9 +98,12 @@ class video():
                 except:
                     raise Exception(f"{self.filePath} have problematic track id")
 
-            if ('properties' in data and 'codec' in data['properties'] and data['properties']['codec'].lower() in tools.to_convert_ffmpeg_type) or (data.get("Format","").lower() in tools.to_convert_ffmpeg_type):
-                    data['ffmpeg_to_convert'] = tools.to_convert_ffmpeg_type[data['properties']['codec'].lower()]
-                    stderr.write(f"Stream {data['StreamOrder']} have the uncompatible format {data.get("Format","").lower()}\n")
+            if ('properties' in data and 'codec' in data['properties'] and data['properties']['codec'].lower() in tools.to_convert_ffmpeg_type):
+                data['ffmpeg_to_convert'] = tools.to_convert_ffmpeg_type[data['properties']['codec'].lower()]
+                stderr.write(f"Stream {data['StreamOrder']} have the uncompatible format {data.get("Format","").lower()} {data['properties']['codec'].lower()}\n")
+            elif (data.get("Format","").lower() in tools.to_convert_ffmpeg_type):
+                data['ffmpeg_to_convert'] = tools.to_convert_ffmpeg_type[data.get("Format","").lower()]
+                stderr.write(f"Stream {data['StreamOrder']} have the uncompatible format {data.get("Format","").lower()}\n")
             elif data['@type'] in {'Audio', 'Text'}:
                 stderr.write(f"Stream {data['StreamOrder']} have the compatible format {data.get("Format","").lower()}\n")
 
