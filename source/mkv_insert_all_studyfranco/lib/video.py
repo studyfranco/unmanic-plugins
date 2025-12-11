@@ -100,6 +100,9 @@ class video():
 
             if ('properties' in data and 'codec' in data['properties'] and data['properties']['codec'].lower() in tools.to_convert_ffmpeg_type) or (data.get("Format","").lower() in tools.to_convert_ffmpeg_type):
                     data['ffmpeg_to_convert'] = tools.to_convert_ffmpeg_type[data['properties']['codec'].lower()]
+                    sys.stderr.write(f"Stream {data['StreamOrder']} have the uncompatible format {data.get("Format","").lower()}\n")
+            elif data['@type'] in {'Audio', 'Text'}:
+                sys.stderr.write(f"Stream {data['StreamOrder']} have the compatible format {data.get("Format","").lower()}\n")
 
             if 'Language' in data:
                 if is_language(data['Language']):
