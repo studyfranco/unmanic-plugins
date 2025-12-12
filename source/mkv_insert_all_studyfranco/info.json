@@ -15,5 +15,5 @@
         "on_worker_process": 2
     },
     "tags": "post-processor,mkv,insert,audio,subtitles",
-    "version": "0.0.2.alpha"
+    "version": "0.0.3"
 }
