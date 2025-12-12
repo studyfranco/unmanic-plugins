@@ -778,6 +778,7 @@ def generate_new_file(video_obj_original,ffmpeg_cmd_dict,md5_audio_already_added
                 extract_stream(video_obj, "subtitle", sub['StreamOrder'], tmp_file_extract)
                 cmd_convert = base_cmd.copy()
                 if 'ffmpeg_to_convert' in sub:
+                    cmd_convert.append(f"-c:s")
                     cmd_convert.append(sub['ffmpeg_to_convert'][0])
                 cmd_convert.extend(["-i", tmp_file_extract,
                      "-map", "0:a?", "-map", "0:s?", "-map_metadata", "0", "-copy_unknown",
