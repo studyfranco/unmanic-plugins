@@ -24,7 +24,7 @@
 
 import re
 import sys
-from os import path
+from os import path,sched_getaffinity
 from time import strftime,gmtime
 from threading import Thread
 import tools
@@ -973,5 +973,5 @@ def merge_videos(file, source, out):
         sys.stderr.write("\t\tFile produce\n")
     
     tools.launch_cmdExt_with_timeout_reload([tools.software["ffmpeg"], "-err_detect", "crccheck", "-err_detect", "bitstream",
-                         "-err_detect", "buffer", "-err_detect", "explode", "-analyzeduration", "0", "-probesize", "500M", "-threads", str(tools.core_to_use),
-                         "-i", out, "-map", "0", "-f", "null", "-c", "copy", "-"], 2, 360)
+                         "-err_detect", "buffer", "-err_detect", "explode", "-analyzeduration", "0", "-probesize", "500M", "-threads", str(sched_getaffinity(0)),
+                         "-i", out, "-map", "0", "-f", "null", "-c", "copy", "-"], 2, 2400)
