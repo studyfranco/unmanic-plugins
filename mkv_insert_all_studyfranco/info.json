@@ -1,0 +1,19 @@
+{
+    "author": "studyfranco",
+    "compatibility": [
+        1,
+        2
+    ],
+    "description": "MKV insert audio and subtitles from source",
+    "icon": "https://raw.githubusercontent.com/Unmanic/plugin.video_transcoder/master/icon.png",
+    "id": "mkv_insert_studyfranco",
+    "name": "MKV insert studyfranco",
+    "platform": [
+        "all"
+    ],
+    "priorities": {
+        "on_worker_process": 2
+    },
+    "tags": "post-processor,mkv,insert,audio,subtitles",
+    "version": "0.0.3"
+}
