@@ -209,7 +209,8 @@ class StreamMapper(object):
                             found_streams_to_process = True
                             self.__apply_custom_stream_mapping(mapping)
                             if has_dolby_vision(self.input_file):
-                                self.stream_encoding += ["-dolbyvision","1"]
+                                if has_dolby_vision_good_profile(self.input_file):
+                                    self.stream_encoding += ["-dolbyvision","1"]
                         else:
                             self.__copy_stream_mapping('v', self.video_stream_count)
                         self.video_stream_count += 1
@@ -522,3 +523,31 @@ def has_dolby_vision(filepath):
                 for track in mi.tracks if track.track_type == "Video")
     except Exception as e:
         raise Exception(f"Error checking for Dolby Vision in {filepath}: {[track for track in mi.tracks if track.track_type == "Video"]}")
+
+def has_dolby_vision_good_profile(filepath):
+    """
+    Checks if the video file contains Dolby Vision metadata using ffprobe data.
+    Returns the Dolby Vision Profile (int) if found, otherwise False.
+    """
+    try:
+        from .probe import ffprobe_file
+        probe_data = ffprobe_file(filepath)
+
+        streams = probe_data.get('streams', [])
+        for stream in streams:
+            if stream.get('codec_type') == 'video':
+                # Vérifier les données latérales (side data) pour Dolby Vision
+                for side_data in stream.get('side_data_list', []):
+                    sd_type = side_data.get('side_data_type', '')
+                    if 'DOVI' in sd_type or 'Dolby Vision' in sd_type:
+                        # Retourne le profil (ex: 5, 7, 8) ou True si profil inconnu
+                        if side_data.get('dv_profile', True) == 7:
+                            self.logger.info(f"Dolby Vision Profil 7 détecté : Désactivé pour éviter l'erreur SVT-AV1.")
+                            return False
+        return True
+    except Exception as e:
+        try:
+            self.logger.error(f"Error checking for Dolby Vision in {filepath}: {e}")
+        except:
+            pass
+        return True
