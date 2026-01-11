@@ -1,0 +1,121 @@
+{
+    "repo": {
+        "id": "repository.studyfranco",
+        "name": "Studyfranco Repo",
+        "icon": "",
+        "repo_data_directory": "https://raw.githubusercontent.com/studyfranco/unmanic-plugins/repo/",
+        "repo_data_url": "https://raw.githubusercontent.com/studyfranco/unmanic-plugins/repo/repo.json"
+    },
+    "plugins": [
+        {
+            "author": "studyfranco",
+            "compatibility": [
+                2
+            ],
+            "description": "VMAF calculator for Unmanic",
+            "icon": "https://raw.githubusercontent.com/Unmanic/plugin.video_transcoder/master/icon.png",
+            "id": "vmaf_calculator_studyfranco",
+            "name": "VMAF Calculator",
+            "platform": [
+                "all"
+            ],
+            "priorities": {
+                "on_worker_process": 3
+            },
+            "tags": "post-processor,mkv,extract,video",
+            "version": "0.0.3"
+        },
+        {
+            "author": "studyfranco",
+            "compatibility": [
+                1,
+                2
+            ],
+            "description": "MKV insert audio and subtitles from source",
+            "icon": "https://raw.githubusercontent.com/Unmanic/plugin.video_transcoder/master/icon.png",
+            "id": "mkv_insert_studyfranco",
+            "name": "MKV insert studyfranco",
+            "platform": [
+                "all"
+            ],
+            "priorities": {
+                "on_worker_process": 2
+            },
+            "tags": "post-processor,mkv,insert,audio,subtitles",
+            "version": "0.0.3"
+        },
+        {
+            "author": "Josh.5",
+            "compatibility": [
+                2
+            ],
+            "description": "Transcode the video streams of a video file, with added support for AV1 encoding using libsvt-av1.",
+            "icon": "https://raw.githubusercontent.com/Unmanic/plugin.video_transcoder/master/icon.png",
+            "id": "video_transcoder_studyfranco",
+            "name": "Transcode Video Files by studyfranco",
+            "priorities": {
+                "on_library_management_file_test": 10,
+                "on_worker_process": 1
+            },
+            "tags": "video,ffmpeg,av1",
+            "version": "0.1.9"
+        },
+        {
+            "author": "R3dC4p,Josh.5",
+            "compatibility": [
+                1,
+                2
+            ],
+            "description": "Move completed encodes to a different directory.",
+            "icon": "https://raw.githubusercontent.com/Unmanic/plugin.mover2/master/icon.png",
+            "id": "mover2_studyfranco",
+            "name": "Mover v2 studyfranco",
+            "platform": [
+                "all"
+            ],
+            "priorities": {
+                "on_postprocessor_file_movement": 0,
+                "on_postprocessor_task_results": 99
+            },
+            "tags": "post-processor, mover",
+            "version": "0.0.8.a"
+        },
+        {
+            "author": "studyfranco",
+            "compatibility": [
+                2
+            ],
+            "description": "Files Selector for Unmanic",
+            "icon": "https://raw.githubusercontent.com/Unmanic/plugin.video_transcoder/master/icon.png",
+            "id": "files_selector_studyfranco",
+            "name": "Files Selector",
+            "platform": [
+                "all"
+            ],
+            "priorities": {
+                "on_postprocessor_task_results": 1000
+            },
+            "tags": "post-processor,mkv,select,video",
+            "version": "0.0.2.alpha"
+        },
+        {
+            "author": "studyfranco",
+            "compatibility": [
+                1,
+                2
+            ],
+            "description": "MKV extract video from source",
+            "icon": "https://raw.githubusercontent.com/Unmanic/plugin.video_transcoder/master/icon.png",
+            "id": "mkv_extract_studyfranco",
+            "name": "MKV extract studyfranco",
+            "platform": [
+                "all"
+            ],
+            "priorities": {
+                "on_worker_process": 0
+            },
+            "tags": "pre-processor,mkv,extract,video",
+            "version": "0.0.1"
+        }
+    ]
+}

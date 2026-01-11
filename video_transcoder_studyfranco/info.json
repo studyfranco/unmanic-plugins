@@ -1,0 +1,16 @@
+{
+    "author": "Josh.5",
+    "compatibility": [
+        2
+    ],
+    "description": "Transcode the video streams of a video file, with added support for AV1 encoding using libsvt-av1.",
+    "icon": "https://raw.githubusercontent.com/Unmanic/plugin.video_transcoder/master/icon.png",
+    "id": "video_transcoder_studyfranco",
+    "name": "Transcode Video Files by studyfranco",
+    "priorities": {
+        "on_library_management_file_test": 10,
+        "on_worker_process": 1
+    },
+    "tags": "video,ffmpeg,av1",
+    "version": "0.1.9"
+}
