@@ -209,7 +209,10 @@ class StreamMapper(object):
                             found_streams_to_process = True
                             self.__apply_custom_stream_mapping(mapping)
                             if has_dolby_vision(self.input_file):
-                                if has_dolby_vision_good_profile(self.input_file):
+                                try:
+                                    if has_dolby_vision_good_profile(self.input_file):
+                                        self.stream_encoding += ["-dolbyvision","1"]
+                                except Exception as e:
                                     self.stream_encoding += ["-dolbyvision","1"]
                         else:
                             self.__copy_stream_mapping('v', self.video_stream_count)
@@ -523,6 +526,7 @@ def has_dolby_vision(filepath):
                 for track in mi.tracks if track.track_type == "Video")
     except Exception as e:
         raise Exception(f"Error checking for Dolby Vision in {filepath}: {[track for track in mi.tracks if track.track_type == "Video"]}")
+        return False
 
 def has_dolby_vision_good_profile(filepath):
     """
