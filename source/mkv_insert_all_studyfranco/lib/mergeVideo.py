@@ -888,7 +888,7 @@ def merge_videos(file, source, out):
             i = 0
             while only_UID_warning and i < len(lined_error):
                 if re.match('^Warning:.*', lined_error[i]) != None:
-                    if re.match(r"^Warning:.+Could not keep a track's UID \d+ because it is already allocated for another track. A new random UID will be allocated automatically.", lined_error[i]) == None:
+                    if re.match(r"^Warning:.+Could not keep a track's UID \d+ because it is already allocated for another track. A new random UID will be allocated automatically.", lined_error[i]) == None and re.match(r"^Warning: .+ track .+: This text subtitle track contains invalid 8-bit characters outside valid multi-byte UTF-8 sequences. Please specify the correct encoding for this track.", lined_error[i]) == None:
                         only_UID_warning = False
                 i += 1
             if (not only_UID_warning):
