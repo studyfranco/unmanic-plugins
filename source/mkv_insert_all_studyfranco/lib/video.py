@@ -70,6 +70,7 @@ class video():
         self.multiples_video = False
     
     def get_mediadata(self):
+        have_incompatible_ffmpeg_codec = False
         stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload([tools.software["mediainfo"], "--Output=JSON", self.filePath], 5, 360)
         if exitCode != 0:
             raise Exception("Error with {} during the mediadata: {}".format(self.filePath,stderror.decode("UTF-8")))
@@ -100,12 +101,22 @@ class video():
 
             if ('properties' in data and 'codec' in data['properties'] and data['properties']['codec'].lower() in tools.to_convert_ffmpeg_type):
                 data['ffmpeg_to_convert'] = tools.to_convert_ffmpeg_type[data['properties']['codec'].lower()]
+                data["ffmpeg_compatible"] = False
+                have_incompatible_ffmpeg_codec = True
                 stderr.write(f"Stream {data['StreamOrder']} have the uncompatible format {data.get("Format","").lower()} {data['properties']['codec'].lower()}\n")
+            elif 'ffprobe' in data and 'codec_name' in data['ffprobe'] and data['ffprobe']['codec_name'].lower() in tools.to_convert_ffmpeg_type:
+                data['ffmpeg_to_convert'] = tools.to_convert_ffmpeg_type[data['ffprobe']['codec_name'].lower()]
+                data["ffmpeg_compatible"] = False
+                have_incompatible_ffmpeg_codec = True
+                tderr.write(f"The file {self.filePath} at stream {data['StreamOrder']} have the uncompatible format {data.get("Format","").lower()} {data['properties']['codec'].lower()}\n")
             elif (data.get("Format","").lower() in tools.to_convert_ffmpeg_type):
                 data['ffmpeg_to_convert'] = tools.to_convert_ffmpeg_type[data.get("Format","").lower()]
+                data["ffmpeg_compatible"] = False
+                have_incompatible_ffmpeg_codec = True
                 stderr.write(f"Stream {data['StreamOrder']} have the uncompatible format {data.get("Format","").lower()}\n")
             elif data['@type'] in {'Audio', 'Text'}:
                 stderr.write(f"Stream {data['StreamOrder']} have the compatible format {data.get("Format","").lower()}\n")
+                data["ffmpeg_compatible"] = True
 
             if 'Language' in data:
                 if is_language(data['Language']):
@@ -124,8 +135,8 @@ class video():
                 else:
                     language = data['Language'].split("-")[0]
             else:
-                language = "und"    
-                
+                language = "und"
+
             if data['@type'] == 'Video':
                 if self.video != None:
                     self.multiples_video = True
@@ -240,21 +251,22 @@ class video():
                 self.remove_tmp_files(type_file="audio")
             self.tmpFiles['audio'] = nameFilesExtract
     
-            baseCommand = [tools.software["ffmpeg"], "-y", "-analyzeduration", "0", "-probesize", "500M", "-threads", "5", "-nostdin", "-i", self.filePath, "-vn", "-dn"]
+            baseCommand = [tools.software["ffmpeg"], "-y", "-analyzeduration", "0", "-probesize", "500M", "-threads", "5", "-nostdin", "-i", self.filePath, "-vn", "-dn", "-sn"]
+            codec_param = []
             if exportParam['Format'] == 'WAV':
                 if 'codec' in exportParam:
-                    baseCommand.extend(["-c:a", exportParam['codec']])
+                    codec_param.extend(["-c:a", exportParam['codec']])
             elif 'codec' in exportParam:
-                baseCommand.extend(["-acodec", exportParam['codec']])
+                codec_param.extend(["-acodec", exportParam['codec']])
             else:
-                baseCommand.extend(["-acodec", exportParam['Format'].lower().replace('-','')])
+                codec_param.extend(["-acodec", exportParam['Format'].lower().replace('-','')])
             if 'BitRate' in exportParam:
-                baseCommand.extend(["-ab", exportParam['BitRate']])
+                codec_param.extend(["-ab", exportParam['BitRate']])
             if 'SamplingRate' in exportParam:
-                baseCommand.extend(["-ar", exportParam['SamplingRate']])
+                codec_param.extend(["-ar", exportParam['SamplingRate']])
             if 'Channels' in exportParam:
-                baseCommand.extend(["-ac", exportParam['Channels']])
-            baseCommand.extend(["-af", "adeclip,acompressor=threshold=-10dB:ratio=4:attack=20:release=250,alimiter=limit=0.97,loudnorm=i=-23.0:lra=7.0:tp=-2.0:linear=true:print_format=json"])
+                codec_param.extend(["-ac", exportParam['Channels']])
+            baseCommand.extend(codec_param)
             audio_pos_file = 0
             wait_end_big_job()
             if cutTime == None:
@@ -267,8 +279,9 @@ class video():
                         nameOutFile = path.join(tools.tmpFolder,self.fileBaseName+"."+str(audio['StreamOrder'])+".1"+"."+exportParam['Format'].lower().replace('-',''))
                         nameFilesExtractCut.append(nameOutFile)
                         cmd = baseCommand.copy()
-                        cmd.extend(["-map", "0:"+str(audio['StreamOrder']), nameOutFile])
-                        self.ffmpeg_progress_audio.append(ffmpeg_pool_audio_convert.apply_async(tools.launch_cmdExt_with_timeout_reload, (cmd,3,max(3000*5,10000))))
+                        name_out_file_tmp = path.join(tools.tmpFolder,self.fileBaseName+"."+str(audio['StreamOrder'])+".1"+"_tmp."+exportParam['Format'].lower().replace('-',''))
+                        cmd.extend(["-map", "0:"+str(audio['StreamOrder']), name_out_file_tmp])
+                        self.ffmpeg_progress_audio.append(ffmpeg_pool_audio_convert.apply_async(generate_normalised_file, (cmd,codec_param.copy(),nameOutFile,name_out_file_tmp)))
             else:
                 for audio in self.audios[language]:
                     if audio["compatible"]:
@@ -281,8 +294,9 @@ class video():
                             nameOutFile = path.join(tools.tmpFolder,self.fileBaseName+"."+str(audio['StreamOrder'])+"."+str(cutNumber)+"."+exportParam['Format'].lower().replace('-',''))
                             nameFilesExtractCut.append(nameOutFile)
                             cmd = baseCommand.copy()
-                            cmd.extend(["-map", "0:"+str(audio['StreamOrder']), "-ss", cut[0], "-t", cut[1] , nameOutFile])
-                            self.ffmpeg_progress_audio.append(ffmpeg_pool_audio_convert.apply_async(tools.launch_cmdExt_with_timeout_reload, (cmd,3,max(3000*5,10000))))
+                            name_out_file_tmp = path.join(tools.tmpFolder,self.fileBaseName+"."+str(audio['StreamOrder'])+"_tmp."+str(cutNumber)+"."+exportParam['Format'].lower().replace('-',''))
+                            cmd.extend(["-map", "0:"+str(audio['StreamOrder']), "-ss", cut[0], "-t", cut[1] , name_out_file_tmp])
+                            self.ffmpeg_progress_audio.append(ffmpeg_pool_audio_convert.apply_async(generate_normalised_file, (cmd,codec_param.copy(),nameOutFile,name_out_file_tmp)))
                             cutNumber += 1
             
     def remove_tmp_files(self,type_file=None):
@@ -475,6 +489,56 @@ def generate_cut_with_begin_length(begin_in_second,length_time,length_time_conve
         begin_in_second += length_time
     
     return list_cut_begin_length
+
+target_i = "-23.0"
+target_tp = "-2.0"
+target_lra = "7.0"
+def generate_normalised_file(cmd_extract,codec_param,nameOutFile,name_out_file_tmp):
+    tools.launch_cmdExt_with_timeout_reload(cmd_extract,3,max(600*4,1800))
+    if not path.exists(name_out_file_tmp):
+        raise FileNotFoundError(f"Extraction failed for {name_out_file_tmp}")
+    
+    stdout, stderror, exitCode = tools.launch_cmdExt([tools.software["ffmpeg"], "-y", "-analyzeduration", "0", "-probesize", "500M", "-threads", "3", "-nostdin", "-i",
+                    name_out_file_tmp, "-af", f"loudnorm=i={target_i}:lra={target_lra}:tp={target_tp}:print_format=json",
+                    "-f", "null", "-"])
+    try:
+        stderr_lines = stderror.decode("utf-8").splitlines()
+        # Find the JSON block in the output
+        json_str = ""
+        in_json = False
+        for line in stderr_lines:
+            if line.strip() == "{":
+                in_json = True
+            if in_json:
+                json_str += line
+            if line.strip() == "}":
+                break
+        
+        stats = json.loads(json_str)
+        measured_i = float(stats['input_i'])
+    except (ValueError, KeyError, json.JSONDecodeError):
+        # Fallback if analysis fails (use 0dB gain)
+        print(f"Warning: Could not analyze loudness for {name_out_file_tmp}. Skipping normalization.")
+        measured_i = target_i
+    
+    gain_db = float(target_i) - float(measured_i)
+
+    if abs(gain_db) < 0.5:
+        filter_str = "anull" # Pass-through
+    else:
+        filter_str = f"volume={gain_db:.2f}dB"
+
+    cmd_normalisation = [tools.software["ffmpeg"], "-y", "-analyzeduration", "0", "-probesize", "500M", "-threads", "3", "-nostdin", "-i",
+                    name_out_file_tmp,
+                    "-map", "0"]
+    cmd_normalisation.extend(codec_param)
+    cmd_normalisation.extend(["-af", f"highpass=f=60,lowpass=f=16000,{filter_str}",nameOutFile])
+    tools.launch_cmdExt(cmd_normalisation)
+
+    if path.exists(name_out_file_tmp):
+        remove(name_out_file_tmp)
+    
+   #baseCommand.extend(["-af", "adeclip,acompressor=threshold=-10dB:ratio=4:attack=20:release=250,alimiter=limit=0.97,loudnorm=i=-23.0:lra=7.0:tp=-2.0:linear=true:print_format=json"])
     
 def generate_cut_to_compare_video_quality(begin_in_second_video_1,begin_in_second_video_2,length_time):
     begins_video_for_compare_quality = []
@@ -829,7 +893,7 @@ def test_if_it_better_by_rules(formatFileBase,bitrateFileBase,formatFileChalleng
 
 def md5_calculator(filePath,streamID,start_time=0,end_time=None,duration_stream=None):
     cmd = [
-    tools.software["ffmpeg"], "-v", "error", "-analyzeduration", "0", "-probesize", "500M", "-threads", "1", "-i", filePath,
+    tools.software["ffmpeg"], "-v", "error", "-analyzeduration", "0", "-probesize", "500000000", "-threads", "1", "-i", filePath,
     "-ss", str(start_time)]
 
     if end_time != None:
@@ -890,7 +954,7 @@ def subtitle_text_md5(filePath,streamID):
 
 def subtitle_text_srt_md5(filePath,streamID):
     cmd = [
-        tools.software["ffmpeg"], "-v", "error", "-analyzeduration", "0", "-probesize", "500M", "-threads", "1", "-i", filePath,
+        tools.software["ffmpeg"], "-v", "error", "-analyzeduration", "0", "-probesize", "500000000", "-threads", "1", "-i", filePath,
         "-map", f"0:{streamID}",
          "-c:s", "srt",
         "-f", "srt", "pipe:1"
@@ -919,7 +983,7 @@ def subtitle_text_srt_md5(filePath,streamID):
 def count_font_lines_in_ass(filePath, streamID):
     cmd = [
         "ffmpeg",
-        "-v", "error", "-analyzeduration", "0", "-probesize", "500M",
+        "-v", "error", "-analyzeduration", "0", "-probesize", "500000000",
         "-threads", str(1),
         "-i", filePath,
         "-map", f"0:{streamID}",
@@ -944,7 +1008,7 @@ def count_font_lines_in_ass(filePath, streamID):
 
 def subtitle_text_ass_md5(filePath,streamID):
     cmd = [
-        tools.software["ffmpeg"], "-v", "error", "-analyzeduration", "0", "-probesize", "500M", "-threads", "1", "-i", filePath,
+        tools.software["ffmpeg"], "-v", "error", "-analyzeduration", "0", "-probesize", "500000000", "-threads", "1", "-i", filePath,
         "-map", f"0:{streamID}",
          "-c:s", "ass",
         "-f", "ass", "pipe:1"
