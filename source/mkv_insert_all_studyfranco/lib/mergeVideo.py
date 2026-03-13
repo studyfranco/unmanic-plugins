@@ -764,10 +764,15 @@ def add_delay(data):
     delay_ = float(data.get("Delay", 0))
     video_delay = float(data.get("Video_Delay", 0))
     
+    if 'Video_Delay' not in data and 'Delay' in data:
+        video_delay = delay_
+        sys.stderr.write(f"Video_Delay is not in data for {data['StreamOrder']}, we will use the Delay value: {delay_} as Video_Delay\n{data}\n")
+    
     if (delay_ != 0 or video_delay != 0) and "Delay_Source" in data:
         if data["Delay_Source"] == "Container":
             if delay_ == video_delay:
                 delay = delay_
+                sys.stderr.write(f"Delay and Video_Delay are the same for {data['StreamOrder']}, we will use the value: {delay_}\n")
             else:
                 sys.stderr.write(f"Delay and Video_Delay are different for {data['StreamOrder']}, we will use the Video_Delay value: {video_delay} and not the Delay value: {delay_}\n")
                 delay = video_delay
