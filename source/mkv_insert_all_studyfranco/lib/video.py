@@ -71,7 +71,7 @@ class video():
     
     def get_mediadata(self):
         have_incompatible_ffmpeg_codec = False
-        stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload([tools.software["mediainfo"], "--Output=JSON", self.filePath], 5, 360)
+        stdout, stderror, exitCode = tools.launch_cmdExt_with_timeout_reload([tools.software["mediainfo"], "--Full","--Output=JSON", self.filePath], 5, 360)
         if exitCode != 0:
             raise Exception("Error with {} during the mediadata: {}".format(self.filePath,stderror.decode("UTF-8")))
         self.mediadata = json.loads(stdout.decode("UTF-8"))

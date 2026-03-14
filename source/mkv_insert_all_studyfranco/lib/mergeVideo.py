@@ -752,23 +752,24 @@ def generate_new_file_audio_config(video_obj,base_cmd,audio,md5_audio_already_ad
         cmd_convert.extend(["-t", duration_best_video, tmp_file_convert])
         ffmpeg_cmd_dict['convert_process'].append(video.ffmpeg_pool_audio_convert.apply_async(tools.launch_cmdExt, (cmd_convert,)))
         sys.stderr.write(str(cmd_convert)+"\n")
+        ffmpeg_cmd_dict['merge_cmd'].extend(["--no-global-tags", "-M", "-B"])
         ffmpeg_cmd_dict['merge_cmd'].extend(mkvmerge_delay)
-        ffmpeg_cmd_dict['merge_cmd'].extend(["--no-global-tags", "-M", "-B", tmp_file_convert])
+        ffmpeg_cmd_dict['merge_cmd'].extend([tmp_file_convert])
         return 1
 
 def add_delay(data):
     #"Delay":"2.002",
     #"Delay_Source":"Container",
     #"Video_Delay":"2.002",
-    delay = 0
-    delay_ = float(data.get("Delay", 0))
-    video_delay = float(data.get("Video_Delay", 0))
-    
+    delay = '0'
+    delay_ = data.get("Delay", '0')
+    video_delay = data.get("Video_Delay", '0')
+
     if 'Video_Delay' not in data and 'Delay' in data:
         video_delay = delay_
         sys.stderr.write(f"Video_Delay is not in data for {data['StreamOrder']}, we will use the Delay value: {delay_} as Video_Delay\n{data}\n")
     
-    if (delay_ != 0 or video_delay != 0) and "Delay_Source" in data:
+    if (delay_ != '0'or video_delay != '0') and "Delay_Source" in data:
         if data["Delay_Source"] == "Container":
             if delay_ == video_delay:
                 delay = delay_
@@ -777,12 +778,12 @@ def add_delay(data):
                 sys.stderr.write(f"Delay and Video_Delay are different for {data['StreamOrder']}, we will use the Video_Delay value: {video_delay} and not the Delay value: {delay_}\n")
                 delay = video_delay
     
-    if delay == 0:
+    if delay == '0':
         return [],[]
-    elif delay < 0:
-        return ["-ss", str(delay*-1)],[]
+    elif float(delay) < 0:
+        return ["-ss", str(Decimal(delay)*Decimal('-1'))],[]
     else:
-        return [],["--delay", f"0:{int(delay*1000)}"]
+        return [],["--delay", f"0:{int(Decimal(delay)*Decimal('1000'))}"]
 
 def generate_new_file(video_obj_original,ffmpeg_cmd_dict,md5_audio_already_added,md5_sub_already_added,duration_best_video):
     file_without_video = path.join(tools.tmpFolder,f"{video_obj_original.fileBaseName}_without_video.mkv")
@@ -835,8 +836,9 @@ def generate_new_file(video_obj_original,ffmpeg_cmd_dict,md5_audio_already_added
                 cmd_convert.extend(["-t", duration_best_video, tmp_file_convert])
                 ffmpeg_cmd_dict['convert_process'].append(video.ffmpeg_pool_audio_convert.apply_async(tools.launch_cmdExt, (cmd_convert,)))
                 sys.stderr.write(str(cmd_convert)+"\n")
+                ffmpeg_cmd_dict['merge_cmd'].extend(["--no-global-tags", "-M", "-B"])
                 ffmpeg_cmd_dict['merge_cmd'].extend(mkvmerge_delay)
-                ffmpeg_cmd_dict['merge_cmd'].extend(["--no-global-tags", "-M", "-B", tmp_file_convert])
+                ffmpeg_cmd_dict['merge_cmd'].extend([tmp_file_convert])
     
     for language,audios in video_obj.audios.items():
         for audio in audios:
