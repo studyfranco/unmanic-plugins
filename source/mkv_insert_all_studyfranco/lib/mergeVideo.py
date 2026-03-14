@@ -793,8 +793,7 @@ def generate_new_file(video_obj_original,ffmpeg_cmd_dict,md5_audio_already_added
     video_obj.get_mediadata()
     video_obj.calculate_md5_streams()
 
-    base_cmd = [tools.software["ffmpeg"], "-err_detect", "crccheck", "-err_detect", "bitstream",
-                    "-err_detect", "buffer", "-err_detect", "explode", "-fflags", "+genpts+igndts",
+    base_cmd = [tools.software["ffmpeg"], "-err_detect", "crccheck+bitstream+buffer", "-fflags", "+genpts+igndts",
                     "-analyzeduration", "1000M", "-probesize", "1000M",
                     "-threads", str(tools.core_to_use), "-vn"]
     
@@ -903,9 +902,9 @@ def merge_videos(file, source, out):
     if tools.dev:
         sys.stderr.write(f'\t\tFile {out_path_tmp_file_name_split} produce\n')
     
-    tools.launch_cmdExt_with_timeout_reload([tools.software["ffmpeg"], "-err_detect", "crccheck", "-err_detect", "bitstream",
-                         "-err_detect", "buffer", "-err_detect", "explode", "-analyzeduration", "1000M", "-probesize", "1000M", "-threads", str(tools.core_to_use),
-                         "-i", out_path_tmp_file_name_split, "-map", "0", "-f", "null", "-c", "copy", "-"], 2, 360)
+    tools.launch_cmdExt_with_timeout_reload([tools.software["ffmpeg"], "-err_detect", "crccheck+bitstream+buffer",
+                                            "-analyzeduration", "1000M", "-probesize", "1000M", "-threads", str(tools.core_to_use),
+                                            "-i", out_path_tmp_file_name_split, "-map", "0", "-f", "null", "-c", "copy", "-"], 2, 360)
     
     if tools.dev:
         sys.stderr.write(f"\t\tGet metadata {out_path_tmp_file_name_split}\n")
@@ -1008,6 +1007,6 @@ def merge_videos(file, source, out):
     if tools.dev:
         sys.stderr.write("\t\tFile produce\n")
     
-    tools.launch_cmdExt_with_timeout_reload([tools.software["ffmpeg"], "-err_detect", "crccheck", "-err_detect", "bitstream",
-                         "-err_detect", "buffer", "-err_detect", "explode", "-analyzeduration", "1000M", "-probesize", "1000M", "-threads", str(sched_getaffinity(0)),
-                         "-i", out, "-map", "0", "-f", "null", "-c", "copy", "-"], 2, 2400)
+    tools.launch_cmdExt_with_timeout_reload([tools.software["ffmpeg"], "-err_detect", "crccheck+bitstream+buffer",
+                                             "-analyzeduration", "1000M", "-probesize", "1000M", "-threads", str(sched_getaffinity(0)),
+                                            "-i", out, "-map", "0", "-f", "null", "-c", "copy", "-"], 2, 2400)
