@@ -783,7 +783,7 @@ def add_delay(data):
     elif float(delay) < 0:
         return ["-ss", str(Decimal(delay)*Decimal('-1'))],[]
     else:
-        return [],["--delay", f"0:{int(Decimal(delay)*Decimal('1000'))}"]
+        return [],["--sync", f"0:{int(Decimal(delay)*Decimal('1000'))}"]
 
 def generate_new_file(video_obj_original,ffmpeg_cmd_dict,md5_audio_already_added,md5_sub_already_added,duration_best_video):
     file_without_video = path.join(tools.tmpFolder,f"{video_obj_original.fileBaseName}_without_video.mkv")
